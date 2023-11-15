@@ -42,16 +42,17 @@ class App(tkm.ThemedTKinterFrame):
 
         self.label = None
         self.screen_pad = self.root.winfo_screenwidth() * 0.05
-        self.style = ttk.Style()
 
         # Global styles
-        self.style.configure('TButton', font=("Arial", int(self.screen_pad*0.9)), justify='center' )
-        self.style.configure('x.TButton', font=("Arial", int(self.screen_pad*0.5)), foreground="red")
-        self.style.configure('Treeview', font=("Arial", 40), rowheight=65, foreground="white", selectbackground='blue')
+        self.style = ttk.Style()
+        self.style.configure('TButton', font=("Arial", int(self.screen_pad*0.9), "bold"), justify='center')
+        self.style.configure('x.TButton', font=("Arial", int(self.screen_pad*0.5), "bold"), foreground="red")
+        self.style.configure('Treeview', font=("Arial", int(self.screen_pad*0.55)), rowheight=75, foreground="white", selectbackground='blue')
         self.style.configure('Treeview.Heading', font=("Arial", 40))
         self.style.map('Treeview', background=[('selected', '#57c8ff')], foreground=[('selected', 'black')])
         self.style.configure('TEntry', font=("Arial", int(self.screen_pad * 0.3)), foreground="white")
         self.style.layout('TNotebook.Tab', [])  # disable tabs layout
+        #self.style.configure('TLabel',  font=("Arial", int(self.screen_pad*0.9), "bold"))  # ridge , groove, sunken, raised
 
         # Notes
         self.notebook = self.Notebook("Notebook Test")
@@ -62,16 +63,17 @@ class App(tkm.ThemedTKinterFrame):
         self.tab5 = self.notebook.addTab("Чек")
 
         # Tab1
-        self.frame1 = self.tab1.addLabelFrame("Авторизация")
+        self.frame1 = self.tab1.addFrame("-")
+
         # self.frame1.Label(text="", col=0)
        # label = self.frame1.Label(text="Авторизация", row=0, col=1, colspan=3)
         #label.configure(font=("Arial", int(self.screen_pad*0.5)), foreground="white")
         # self.frame1.Label(text="", row=7)
         # self.frame1.Label(text="", col=4)
 
-        self.userinputvar = tkinter.StringVar(value="Логин".upper())
+        self.userinputvar = tkinter.StringVar(value="ЛОГИН")
 
-        self.passinputvar = tkinter.StringVar(value="Пароль".upper())
+        self.passinputvar = tkinter.StringVar(value="ПАРОЛЬ")
 
         self.user_field = self.frame1.Entry(textvariable=self.userinputvar, col=0, row=0, colspan=3)
         self.user_field.bind("<1>", lambda event: self.clear_user_entry())
@@ -94,7 +96,7 @@ class App(tkm.ThemedTKinterFrame):
         self.frame1.AccentButton("ВВОД", self.authorization, col=2, row=5)
 
         # Tab2
-        frame2 = self.tab2.addLabelFrame("Инкассация")
+        frame2 = self.tab2.addFrame("Инкассация")
         frame2.AccentButton("Открытие\nоперационного дня", lambda: nt[0].select(1),
                                           col=0, row=0, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
         frame2.Button("Закрытие\nоперационного дня", lambda: nt[0].select(1),
@@ -102,38 +104,39 @@ class App(tkm.ThemedTKinterFrame):
         frame2.Button('❮', lambda: nt[0].select(0), col=4, rowspan=2,  style='x.TButton')
 
         # Tab3
-        frame3 = self.tab3.addLabelFrame("Внесение")
-        frame3.Label(text="", col=0, padx=self.screen_pad)
-        frame3.Label(text="", row=0, col=1)
-        frame3.Label(text="", row=4)
-        deposit_frame = frame3.addLabelFrame("Cумма", col=1, row=2, colspan=2)
-        button_frame = frame3.addFrame(name="", col=3, row=2, colspan=2)
+        frame3 = self.tab3.addFrame("Внесение")
+        # frame3.Label(text="", col=0, padx=self.screen_pad)
+        # frame3.Label(text="", row=0, col=1)
+        # frame3.Label(text="", row=4)
+        deposit_frame = frame3.addLabelFrame("", col=0, row=1, colspan=5)
+        button_frame = frame3.addFrame(name="", col=5, row=1)
 
-        label_deposit = deposit_frame.Label(text="2000")
-        label_deposit.configure(font=("Arial", 50))
-        label_down = frame3.Label("Максимальное колличество\n\t200 купюр", col=1, row=3, colspan=4)
-        label_down.configure(font=("Arial", 40), foreground="#57c8ff")
-        label_up = frame3.Label("Пожалуйста внесите купюры", col=1, row=1, colspan=4)
-        label_up.configure(font=("Arial", 40), foreground="#57c8ff")
+        label_deposit = deposit_frame.Label(text="99999999")
+        label_deposit.configure(font=("Arial", int(self.screen_pad), "bold"), width=9)
+        label_down = frame3.Label("Пожалуйста внесите купюры,\nмаксимальное колличество\n200 купюр.", col=0, row=0, colspan=6)
+        label_down.configure(font=("Arial", int(self.screen_pad*0.8)), foreground="#57c8ff", justify="center")
+        # label_up = frame3.Label("Пожалуйста внесите купюры", col=1, row=1, colspan=4)
+        # label_up.configure(foreground="#57c8ff")
 
-        self.done = button_frame.Button('Подтвердить', self.receipt)
-        frame3.Button('❮', lambda: nt[0].select(0), col=6, style='x.TButton')
+        self.done = button_frame.Button('Зачислить', self.receipt)
+        frame3.Button('❮', lambda: nt[0].select(0), col=6, rowspan=2, style='x.TButton')
 
         # Tab4
-        self.frame4 = self.tab4.addLabelFrame("Выбор счета")
+        self.frame4 = self.tab4.addFrame("Выбор счета")
         label_up = self.frame4.Label("Выберете счет для зачисления", col=0, row=0, colspan=7)
-        label_up.configure(font=("Arial", 40), foreground="#57c8ff")
+        label_up.configure(font=("Arial", int(self.screen_pad * 0.8)), foreground="#57c8ff")
         with open('treeviewdata.json', encoding="utf-8") as f:
             tree = json.load(f)
-        self.tree_data = self.frame4.Treeview(['Контрагент', 'Счет'], [120, 120], 3, tree,
+        self.tree_data = self.frame4.Treeview(['Контрагент', 'Счет'], [110, 140], 3, tree,
                                               'subfiles', ['name', 'purpose'], col=0, row=1, colspan=7, rowspan=7)
+        self.tree_data.selection_add(1)
         self.tree_data.configure(style="Treeview")
         self.tree_data.bind("<<TreeviewSelect>>", self.tree_selection)
-        self.frame4.Button('❮', lambda: nt[0].select(0), col=7, rowspan=7, style='x.TButton')
+        self.frame4.Button('❮', lambda: nt[0].select(0), col=7, rowspan=9, style='x.TButton')
         self.frame4.Button(text="Выбрать", col=0, row=8, colspan=7, command=lambda: nt[0].select(2))
 
         # Tab5
-        self.frame5 = self.tab5.addLabelFrame("Заберите чек")
+        self.frame5 = self.tab5.addFrame("Заберите чек")
         self.frame5.Label(text="", col=0, padx=self.screen_pad)
         self.frame5.Label(text="", row=0, col=1)
 
@@ -159,12 +162,12 @@ class App(tkm.ThemedTKinterFrame):
         self.client = item["text"]
         self.account = item["values"][0]
 
-        if not self.label:
-            self.label = self.frame4.Text(f"{self.client} {self.account}", col=1, row=2, colspan=3, sticky=W)
-            self.label.configure(font=("Arial", int(self.screen_pad*0.3)))
-            self.frame4.Button('Подтвердить', lambda: nt[0].select(2), col=3, row=2, colspan=2, sticky=E)
-        else:
-            self.label.configure(text=f"{self.client} {self.account}")
+        # if not self.label:
+        #     self.label = self.frame4.Text(f"{self.client} {self.account}", col=1, row=2, colspan=3, sticky=W)
+        #     self.label.configure(font=("Arial", int(self.screen_pad*0.3)))
+        #     self.frame4.Button('Подтвердить', lambda: nt[0].select(2), col=3, row=2, colspan=2, sticky=E)
+        # else:
+        #     self.label.configure(text=f"{self.client} {self.account}")
 
     def receipt(self):
         receipt_table = PrettyTable(["Время внесения", "Сумма"], border=False)
