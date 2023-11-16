@@ -13,7 +13,7 @@ import win32ui
 import win32print
 import win32ui
 from PIL import Image, ImageWin
-from variables import day_state
+from variables import *
 
 HORZRES = 8
 VERTRES = 10
@@ -94,9 +94,9 @@ class App(tkm.ThemedTKinterFrame):
         # Tab2
         frame2 = self.tab2.addFrame("Инкассация")
         frame2.AccentButton("Открытие\nоперационного дня", self.day_open,
-                                          col=0, row=0, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
+                            col=0, row=0, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
         frame2.Button("Закрытие\nоперационного дня", self.day_close,
-                                      col=0, row=1, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
+                      col=0, row=1, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
         frame2.Button('❮', lambda: nt[0].select(0), col=4, rowspan=2,  style='x.TButton')
 
         # Tab3
@@ -285,21 +285,45 @@ class App(tkm.ThemedTKinterFrame):
         hDC.EndDoc()
         hDC.DeleteDC()
 
-    def clear_user_entry(self):
-        if self.userinputvar.get() == "ЛОГИН":
+    def entry_insert(self, field: str):
+        if field  == "user":
             self.user_field.delete(0, END)
+            self.user_field.insert("0", "ЛОГИН")
+        elif field == "pass":
+            self.password_field.delete(0, END)
+            self.password_field.configure(show="")
+            self.password_field.insert("0", "ПАРОЛЬ")
+
+    def clear_user_entry(self):
+        self.user_field.focus_set()
+        if self.user_field.get() == "ЛОГИН":
+            self.user_field.delete(0, END)
+        if self.password_field.get() == "":
+            self.entry_insert("pass")
         self.edit_var = self.userinputvar
 
     def clear_password_entry(self):
-        if self.passinputvar.get() == "ПАРОЛЬ":
+        self.password_field.focus_set()
+        print(str(self.root.focus_get()) == ".!notebook.!frame.!frame.!entry", str(self.root.focus_get()))
+        if self.password_field.get() == "ПАРОЛЬ":
             self.password_field.delete(0, END)
             self.password_field.configure(show="✳")
+        if self.user_field.get() == "":
+            self.entry_insert("user")
         self.edit_var = self.passinputvar
+
+
 
     def backspace(self):
         text = self.edit_var.get()
-        new_text = text[:-1]
-        self.edit_var.set(new_text)
+        if text.isdigit():
+            new_text = text[:-1]
+            self.edit_var.set(new_text)
+        print(self.passinputvar, self.userinputvar)
+        if self.password_field.get() == "":
+            self.entry_insert("pass")
+        if self.user_field.get() == "":
+            self.entry_insert("user")
 
     def set_defoult_entry(self):
         self.user_field.delete(0, END)

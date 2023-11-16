@@ -1,1 +1,1 @@
-day_state = False
+day_state = True
