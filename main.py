@@ -13,7 +13,7 @@ import win32ui
 import win32print
 import win32ui
 from PIL import Image, ImageWin
-
+from variables import day_state
 
 HORZRES = 8
 VERTRES = 10
@@ -28,7 +28,6 @@ PHYSICALOFFSETX = 5
 PHYSICALOFFSETY = 5
 
 
-
 class App(tkm.ThemedTKinterFrame):
     def __init__(self):
         super().__init__("ADM_show", "Sun-valley", "dark", useconfigfile=False)
@@ -37,10 +36,10 @@ class App(tkm.ThemedTKinterFrame):
         self.int_receipt_number = 1
         self.receipt_number = f"Чек № {self.int_receipt_number}"
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
+        self.day_status = day_state
         self.printer_name = win32print.GetDefaultPrinter() # "KPOS_58 Printer"
         self.edit_var = tkinter.StringVar()
         self.adres = "АДМ №213445 121096 г.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n"
-
         self.label = None
         self.screen_pad = self.root.winfo_screenwidth() * 0.05
 
@@ -62,8 +61,8 @@ class App(tkm.ThemedTKinterFrame):
         self.tab4 = self.notebook.addTab("Выбор счета")
         self.tab5 = self.notebook.addTab("Чек")
         self.tab6 = self.notebook.addTab("Закр. опер. день")
-        # self.tab7 = self.notebook.addTab("Откр. опер. день")
-        # self.tab8 = self.notebook.addTab("Ошибка опер. день")
+        self.tab7 = self.notebook.addTab("Откр. опер. день")
+        self.tab8 = self.notebook.addTab("Ошибка опер. день")
 
         # Tab1
         self.frame1 = self.tab1.addFrame("-")
@@ -75,8 +74,8 @@ class App(tkm.ThemedTKinterFrame):
         self.user_field.bind("<1>", lambda event: self.clear_user_entry())
         self.password_field = self.frame1.Entry(textvariable=self.passinputvar, col=0, row=1, colspan=3)
         self.password_field.bind("<1>", lambda event: self.clear_password_entry())
-        self.user_field.configure(font=("Arial", int(self.screen_pad * 0.7)))
-        self.password_field.configure(font=("Arial", int(self.screen_pad * 0.7)))
+        self.user_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"))
+        self.password_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"))
 
         self.button1 = self.frame1.Button("1", lambda: self.digit_buttons(self.button1), col=0, row=2)
         self.button2 = self.frame1.Button("2", lambda: self.digit_buttons(self.button2), col=1, row=2)
@@ -94,9 +93,9 @@ class App(tkm.ThemedTKinterFrame):
 
         # Tab2
         frame2 = self.tab2.addFrame("Инкассация")
-        frame2.AccentButton("Открытие\nоперационного дня", lambda: nt[0].select(5),
+        frame2.AccentButton("Открытие\nоперационного дня", self.day_open,
                                           col=0, row=0, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
-        frame2.Button("Закрытие\nоперационного дня", self.close_day,
+        frame2.Button("Закрытие\nоперационного дня", self.day_close,
                                       col=0, row=1, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
         frame2.Button('❮', lambda: nt[0].select(0), col=4, rowspan=2,  style='x.TButton')
 
@@ -152,6 +151,26 @@ class App(tkm.ThemedTKinterFrame):
         self.denom_text.grid(column=0, row=3, columnspan=4, sticky=N)
         self.frame6.Button('❮', lambda: nt[0].select(0), col=4, rowspan=4, style='x.TButton')
 
+        # Tab7
+        self.frame7 = self.tab7.addFrame("Операционный день открыт")
+        self.label7 = self.frame7.Label("Операционный день открыт\nСчетчики обнулены"
+                                        , size=int(self.screen_pad * 0.8), col=0, row=0,
+                                        colspan=4)
+        self.label7.configure(foreground="#57c8ff")
+        self.frame7.Seperator(col=0, row=2, colspan=4)
+        self.denom_text1 = tkinter.Text(self.frame7.master, font=("Arial", int(self.screen_pad * 0.3)),
+                                       height=self.screen_pad * 0.2, border=False)
+        self.denom_text1.tag_configure("center", justify='center')
+        self.denom_text1.grid(column=0, row=3, columnspan=4, sticky=N)
+        self.frame7.Button('❮', lambda: nt[0].select(0), col=4, rowspan=4, style='x.TButton')
+
+        # Tab8
+        frame8 = self.tab8.addFrame("Откройте смену")
+        frame_msg = frame8.addLabelFrame("", colspan=4)
+        label8 = frame_msg.Label("Операционный день закрыт.\n Для начала работы откройте\n операционный день."
+                                 , size=int(self.screen_pad * 0.8))
+        label8.configure(foreground="#57c8ff", justify="center")
+        frame8.Button('❮', lambda: nt[0].select(0), col=4, style='x.TButton')
 
 
         #self.bool = tkinter.BooleanVar()
@@ -160,7 +179,10 @@ class App(tkm.ThemedTKinterFrame):
         #self.togglebutton.grid(row=2, column=2)
         self.run(onlyFrames=False)
 
-    def close_day(self):
+    def day_close(self):
+        if self.day_status:
+            self.day_state(False)
+            self.day_status = False
         self.denom_text.configure(state="normal")
         self.denom_text.delete("0.0", END)
         self.denom_text.insert(END, f"{datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')}\n{self.adres}В сумке:\n", "center")
@@ -168,9 +190,25 @@ class App(tkm.ThemedTKinterFrame):
         for denom, quantity in self.denom_dict.items():
             self.denom_text.insert(END, f"{denom} руб. - {quantity} шт.\n", "center")
             total += int(denom) * quantity
-        self.denom_text.insert(END, f"ИТОГО {str(total)} руб.", "center")
+        self.denom_text.insert(END, f"ИТОГО {str(total)} руб.\n\n ОПЕРАЦИОННЫЙ ДЕНЬ ЗАКРЫТ", "center")
         self.denom_text.configure(state="disabled")
         nt[0].select(5)
+
+    def day_open(self):
+        if not self.day_status:
+            self.day_state(True)
+            self.day_status = True
+        self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
+        self.label7.configure(justify="center")
+        self.denom_text1.configure(state="normal")
+        self.denom_text1.delete("0.0", END)
+        self.denom_text1.insert(END, f"{datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')}\n{self.adres}В сумке:\n", "center")
+        for denom, quantity in self.denom_dict.items():
+            self.denom_text1.insert(END, f"{denom} руб. - {quantity} шт.\n", "center")
+        self.denom_text1.insert(END, "ОПЕРАЦИОННЫЙ ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ", "center")
+        self.denom_text1.configure(state="disabled")
+        nt[0].select(6)
+
 
     def tree_selection(self, event):
         item = self.tree_data.item(self.tree_data.selection())
@@ -275,7 +313,10 @@ class App(tkm.ThemedTKinterFrame):
         input_pass = self.passinputvar.get()
         if input_user == "1" and input_pass == "1":
             self.set_defoult_entry()
-            nt[0].select(3)
+            if self.day_status:
+                nt[0].select(3)
+            else:
+                nt[0].select(7)
         elif input_user == "2" and input_pass == "2":
             self.set_defoult_entry()
             nt[0].select(1)
@@ -299,6 +340,13 @@ class App(tkm.ThemedTKinterFrame):
         text = self.edit_var.get()
         text += current_button.cget("text")
         self.edit_var.set(text)
+
+    def day_state(self, status):
+        with open("variables.py", "w") as f:
+            if not status:
+                f.write("day_state = False")
+            else:
+                f.write("day_state = True")
 
 
 if __name__ == '__main__':
