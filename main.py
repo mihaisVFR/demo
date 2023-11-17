@@ -4,7 +4,6 @@ import qrcode
 import tkinter
 from tkinter import *
 from tkinter import ttk
-from TKinterModernThemes.WidgetFrame import nt
 import json
 import datetime
 from prettytable import PrettyTable
@@ -14,6 +13,7 @@ import win32print
 import win32ui
 from PIL import Image, ImageWin
 from variables import *
+
 
 HORZRES = 8
 VERTRES = 10
@@ -27,19 +27,24 @@ PHYSICALHEIGHT = 110
 PHYSICALOFFSETX = 5
 PHYSICALOFFSETY = 5
 
+#nt = ttk.Notebook
 
 class App(tkm.ThemedTKinterFrame):
-    def __init__(self):
-        super().__init__("ADM_show", "Sun-valley", "dark", useconfigfile=False)
+    def __init__(self, theme, variant):
+        tkm.firstWindow = True
+        super().__init__("ADM_show", theme, variant, useconfigfile=False)  # azure / sun-valley / park
         self.client = ""
         self.account = ""
-        self.int_receipt_number = 1
-        self.receipt_number = f"Чек № {self.int_receipt_number}"
+        self.receipt_number = f"Чек № {receipt_number}"
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
         self.day_status = day_state
         self.printer_name = win32print.GetDefaultPrinter() # "KPOS_58 Printer"
         self.edit_var = tkinter.StringVar()
-        self.adres = "АДМ №213445 121096 г.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n"
+        if theme == "azure" or theme == "sun-valley":
+            self.theme_color = '#57c8ff'
+        else:
+            self.theme_color = "#217346"
+        self.adres = "АДМ №213445 121096\nг.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n"
         self.label = None
         self.screen_pad = self.root.winfo_screenwidth() * 0.05
 
@@ -47,10 +52,12 @@ class App(tkm.ThemedTKinterFrame):
         self.style = ttk.Style()
         self.style.configure('TButton', font=("Arial", int(self.screen_pad*0.9), "bold"), justify='center')
         self.style.configure('x.TButton', font=("Arial", int(self.screen_pad*0.5), "bold"), foreground="red")
-        self.style.configure('Treeview', font=("Arial", int(self.screen_pad*0.55)), rowheight=75, foreground="white", selectbackground='blue')
+        self.style.configure('Treeview', font=("Arial", int(self.screen_pad*0.55)), rowheight=75)
         self.style.configure('Treeview.Heading', font=("Arial", 40))
-        self.style.map('Treeview', background=[('selected', '#57c8ff')], foreground=[('selected', 'black')])
-        self.style.configure('TEntry', font=("Arial", int(self.screen_pad * 0.3)), foreground="white")
+        self.style.map('Treeview', background=[('selected', self.theme_color)], foreground=[('selected', 'black')])
+        self.style.configure('TEntry', font=("Arial", int(self.screen_pad * 0.3)))
+        if variant == "light":
+            self.style.configure('TFrame', borderwidth=3, relief='ridge' ) # flat, groove, raised, ridge, solid, or sunken
         self.style.layout('TNotebook.Tab', [])  # disable tabs layout
 
         # Notes
@@ -66,7 +73,6 @@ class App(tkm.ThemedTKinterFrame):
 
         # Tab1
         self.frame1 = self.tab1.addFrame("-")
-
         self.userinputvar = tkinter.StringVar(value="ЛОГИН")
         self.passinputvar = tkinter.StringVar(value="ПАРОЛЬ")
 
@@ -97,8 +103,8 @@ class App(tkm.ThemedTKinterFrame):
                             col=0, row=0, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
         frame2.Button("Закрытие\nоперационного дня", self.day_close,
                       col=0, row=1, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
-        frame2.Button('❮', lambda: nt[0].select(0), col=4, rowspan=2,  style='x.TButton')
-
+        back = frame2.Button('❮', lambda: self.select_tab(0), col=4, rowspan=2,  style='x.TButton')
+        back.configure(width=1)
         # Tab3
         frame3 = self.tab3.addFrame("Внесение")
         deposit_frame = frame3.addLabelFrame("", col=0, row=1, colspan=5)
@@ -107,14 +113,15 @@ class App(tkm.ThemedTKinterFrame):
         label_deposit = deposit_frame.Label(text="99999999")
         label_deposit.configure(font=("Arial", int(self.screen_pad), "bold"), width=9)
         label_down = frame3.Label("Внесите банкноты.\nМаксимальное колличество:\n200 банкнот", col=0, row=0, colspan=6)
-        label_down.configure(font=("Arial", int(self.screen_pad*0.8)), foreground="#57c8ff", justify="center")
+        label_down.configure(font=("Arial", int(self.screen_pad*0.8), "bold"), foreground=self.theme_color, justify="center")
         self.done = button_frame.Button('Зачислить', self.receipt)
-        frame3.Button('❮', lambda: nt[0].select(3), col=6, rowspan=2, style='x.TButton')
+        back = frame3.Button('❮', lambda: self.select_tab(3), col=6, rowspan=2, style='x.TButton')
+        back.configure(width=1)
 
         # Tab4
         self.frame4 = self.tab4.addFrame("Выбор счета")
         label_up = self.frame4.Label("Выберете счет для зачисления", col=0, row=0, colspan=7)
-        label_up.configure(font=("Arial", int(self.screen_pad * 0.8)), foreground="#57c8ff")
+        label_up.configure(font=("Arial", int(self.screen_pad * 0.8), "bold"), foreground=self.theme_color)
         with open('treeviewdata.json', encoding="utf-8") as f:
             tree = json.load(f)
         self.tree_data = self.frame4.Treeview(['Контрагент', 'Счет'], [110, 140], 3, tree,
@@ -122,56 +129,55 @@ class App(tkm.ThemedTKinterFrame):
         self.tree_data.selection_add(1)
         self.tree_data.configure(style="Treeview")
         self.tree_data.bind("<<TreeviewSelect>>", self.tree_selection)
-        self.frame4.Button('❮', lambda: nt[0].select(0), col=7, rowspan=9, style='x.TButton')
-        self.frame4.Button(text="Выбрать", col=0, row=8, colspan=7, command=lambda: nt[0].select(2))
+        back = self.frame4.Button('❮', lambda: self.select_tab(0), col=7, rowspan=9, style='x.TButton')
+        back.configure(width=1)
+        self.frame4.Button(text="Выбрать", col=0, row=8, colspan=7, command=lambda: self.select_tab(2))
 
         # Tab5
         self.frame5 = self.tab5.addFrame("Заберите чек")
         self.frame5.Label(text="", col=0, padx=self.screen_pad)
         self.frame5.Label(text="", row=0, col=1)
-
         self.qr_label = ttk.Label(self.frame5.master)
         self.qr_label.grid(row=4, column=1, columnspan=4, sticky=N)
         self.label5 = self.frame5.Label("Заберите чек", col=1, row=1, colspan=4)
-        self.label5.configure(font=("Arial", 40))
+        self.label5.configure(font=("Arial", int(self.screen_pad * 0.9)))
         self.frame5.Seperator(col=1, row=2, colspan=4)
         self.receipt_text = self.frame5.Text("", col=1, row=3, colspan=4, sticky=N)
-
-        self.frame5.Button('❮', lambda: nt[0].select(0), col=6, style='x.TButton')
-
+        back = self.frame5.Button('❮', lambda: self.select_tab(0), col=9, style='x.TButton', rowspan=5)
+        back.configure(width=1)
         # Tab6
         self.denom_dict = {"5": 17, "10": 2, "50": 54, "100": 92, "500": 0, "1000": 1, "2000": 0, "5000": 12}
         self.frame6 = self.tab6.addFrame("Операционный день закрыт")
         self.label6 = self.frame6.Label("Операционный день закрыт", size=int(self.screen_pad * 0.8), col=0, row=0, colspan=4)
-        self.label6.configure(foreground="#57c8ff")
+        self.label6.configure(foreground=self.theme_color)
         self.frame6.Seperator(col=0, row=2, colspan=4)
-        self.denom_text = tkinter.Text(self.frame6.master, font=("Arial", int(self.screen_pad*0.3)),
-                                       height=self.screen_pad*0.2, border=False)
+        self.denom_text = tkinter.Text(self.frame6.master, font=("Arial", int(self.screen_pad*0.25)),
+                                       height=self.screen_pad*0.25, border=False)
         self.denom_text.tag_configure("center", justify='center')
         self.denom_text.grid(column=0, row=3, columnspan=4, sticky=N)
-        self.frame6.Button('❮', lambda: nt[0].select(0), col=4, rowspan=4, style='x.TButton')
-
+        back = self.frame6.Button('❮', lambda: self.select_tab(0), col=4, rowspan=4, style='x.TButton')
+        back.configure(width=1)
         # Tab7
         self.frame7 = self.tab7.addFrame("Операционный день открыт")
         self.label7 = self.frame7.Label("Операционный день открыт\nСчетчики обнулены"
                                         , size=int(self.screen_pad * 0.8), col=0, row=0,
                                         colspan=4)
-        self.label7.configure(foreground="#57c8ff")
+        self.label7.configure(foreground=self.theme_color)
         self.frame7.Seperator(col=0, row=2, colspan=4)
-        self.denom_text1 = tkinter.Text(self.frame7.master, font=("Arial", int(self.screen_pad * 0.3)),
-                                       height=self.screen_pad * 0.2, border=False)
+        self.denom_text1 = tkinter.Text(self.frame7.master, font=("Arial", int(self.screen_pad * 0.25)),
+                                       height=self.screen_pad * 0.25, border=False)
         self.denom_text1.tag_configure("center", justify='center')
         self.denom_text1.grid(column=0, row=3, columnspan=4, sticky=N)
-        self.frame7.Button('❮', lambda: nt[0].select(0), col=4, rowspan=4, style='x.TButton')
-
+        back = self.frame7.Button('❮', lambda: self.select_tab(0), col=4, rowspan=4, style='x.TButton')
+        back.configure(width=1)
         # Tab8
         frame8 = self.tab8.addFrame("Откройте смену")
         frame_msg = frame8.addLabelFrame("", colspan=4)
         label8 = frame_msg.Label("Операционный день закрыт.\n Для начала работы откройте\n операционный день."
                                  , size=int(self.screen_pad * 0.8))
-        label8.configure(foreground="#57c8ff", justify="center")
-        frame8.Button('❮', lambda: nt[0].select(0), col=4, style='x.TButton')
-
+        label8.configure(foreground=self.theme_color, justify="center")
+        back = frame8.Button('❮', lambda: self.select_tab(0), col=4, style='x.TButton')
+        back.configure(width=1)
 
         #self.bool = tkinter.BooleanVar()
         #self.togglebutton = self.frame.ToggleButton(text="Toggle button", variable=self.bool)
@@ -185,14 +191,16 @@ class App(tkm.ThemedTKinterFrame):
             self.day_status = False
         self.denom_text.configure(state="normal")
         self.denom_text.delete("0.0", END)
-        self.denom_text.insert(END, f"{datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')}\n{self.adres}В сумке:\n", "center")
+        self.denom_text.insert(END, f"{datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')}\n{self.adres}\nВ сумке:\n", "center")
         total = 0
         for denom, quantity in self.denom_dict.items():
             self.denom_text.insert(END, f"{denom} руб. - {quantity} шт.\n", "center")
             total += int(denom) * quantity
-        self.denom_text.insert(END, f"ИТОГО {str(total)} руб.\n\n ОПЕРАЦИОННЫЙ ДЕНЬ ЗАКРЫТ", "center")
+        self.denom_text.insert(END, f"\nИТОГО {str(total)} руб.\nОПЕРАЦИОННЫЙ ДЕНЬ\nЗАКРЫТ", "center")
         self.denom_text.configure(state="disabled")
-        nt[0].select(5)
+        self.print_text(self.denom_text.get("0.0", END))
+        self.print_text(f" \n \n \n \n  {'_' * 23}")
+        self.select_tab(5)
 
     def day_open(self):
         if not self.day_status:
@@ -202,13 +210,17 @@ class App(tkm.ThemedTKinterFrame):
         self.label7.configure(justify="center")
         self.denom_text1.configure(state="normal")
         self.denom_text1.delete("0.0", END)
-        self.denom_text1.insert(END, f"{datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')}\n{self.adres}В сумке:\n", "center")
+        self.denom_text1.insert(END, f"{datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')}\n{self.adres}\nВ сумке:\n", "center")
         for denom, quantity in self.denom_dict.items():
             self.denom_text1.insert(END, f"{denom} руб. - {quantity} шт.\n", "center")
-        self.denom_text1.insert(END, "ОПЕРАЦИОННЫЙ ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ", "center")
+        self.denom_text1.insert(END, "\nОПЕР. ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ", "center")
         self.denom_text1.configure(state="disabled")
-        nt[0].select(6)
+        self.print_text(self.denom_text1.get("0.0", END))
+        self.print_text(f" \n \n \n \n  {'_' * 23}")
+        self.select_tab(6)
 
+    def select_tab(self, tab):
+        self.notebook.notebook.select(tab)
 
     def tree_selection(self, event):
         item = self.tree_data.item(self.tree_data.selection())
@@ -225,7 +237,8 @@ class App(tkm.ThemedTKinterFrame):
     def receipt(self):
         receipt_table = PrettyTable(["Время внесения", "Сумма"], border=False)
         receipt_table.add_row([datetime.datetime.now().strftime("%Y-%m-%d %H.%M.%S"), "2000"])
-        receipt_total = f"{self.adres}{self.receipt_number}\n{self.client}\n{self.account}\n\n{receipt_table}\n\n ИТОГО 2000"
+        receipt_total = f"{self.receipt_number}{self.adres}{self.receipt_number}\n{self.client}\n{self.account}\n" \
+                        f"\n{receipt_table}\n\n ИТОГО 2000"
         self.receipt_text.configure(text=receipt_total, font="Courier", justify="center")
         self.make_qr(receipt_total)
         self.print_text(receipt_total)
@@ -233,7 +246,7 @@ class App(tkm.ThemedTKinterFrame):
         self.print_text(f" \n \n \n \n  {'_'* 23}")
         img = ImageTk.PhotoImage(Image.open("tmpqr.png"))
         self.qr_label.configure(image=img)
-        nt[0].select(4)
+        self.select_tab(4)
 
     def make_qr(self, qr_input):
         qr = qrcode.make(qr_input, box_size=3)
@@ -288,10 +301,12 @@ class App(tkm.ThemedTKinterFrame):
     def entry_insert(self, field: str):
         if field  == "user":
             self.user_field.delete(0, END)
+            #self.user_field.config(foreground="#434343")
             self.user_field.insert("0", "ЛОГИН")
         elif field == "pass":
             self.password_field.delete(0, END)
             self.password_field.configure(show="")
+            #elf.password_field.config(foreground="#434343")
             self.password_field.insert("0", "ПАРОЛЬ")
 
     def clear_user_entry(self):
@@ -304,7 +319,6 @@ class App(tkm.ThemedTKinterFrame):
 
     def clear_password_entry(self):
         self.password_field.focus_set()
-        print(str(self.root.focus_get()) == ".!notebook.!frame.!frame.!entry", str(self.root.focus_get()))
         if self.password_field.get() == "ПАРОЛЬ":
             self.password_field.delete(0, END)
             self.password_field.configure(show="✳")
@@ -312,20 +326,17 @@ class App(tkm.ThemedTKinterFrame):
             self.entry_insert("user")
         self.edit_var = self.passinputvar
 
-
-
     def backspace(self):
         text = self.edit_var.get()
         if text.isdigit():
             new_text = text[:-1]
             self.edit_var.set(new_text)
-        print(self.passinputvar, self.userinputvar)
         if self.password_field.get() == "":
             self.entry_insert("pass")
         if self.user_field.get() == "":
             self.entry_insert("user")
 
-    def set_defoult_entry(self):
+    def set_default_entry(self):
         self.user_field.delete(0, END)
         self.user_field.insert(0, "ЛОГИН")
         self.password_field.delete(0, END)
@@ -336,14 +347,26 @@ class App(tkm.ThemedTKinterFrame):
         input_user = self.userinputvar.get()
         input_pass = self.passinputvar.get()
         if input_user == "1" and input_pass == "1":
-            self.set_defoult_entry()
+            self.set_default_entry()
             if self.day_status:
-                nt[0].select(3)
+                self.select_tab(3)
             else:
-                nt[0].select(7)
+                self.select_tab(7)
         elif input_user == "2" and input_pass == "2":
-            self.set_defoult_entry()
-            nt[0].select(1)
+            self.set_default_entry()
+            self.select_tab(1)
+        elif input_user == "3" and input_pass == "3":
+            self.root.destroy()
+            self.root.quit()
+            App("azure", "light")
+        elif input_user == "4" and input_pass == "4":
+            self.root.destroy()
+            self.root.quit()
+            App("park", "light")
+        elif input_user == "5" and input_pass == "5":
+            self.root.destroy()
+            self.root.quit()
+            App("park", "dark")
 
         else:
             self.flash()
@@ -361,9 +384,10 @@ class App(tkm.ThemedTKinterFrame):
         self.password_field.config(foreground=next_color)
 
     def digit_buttons(self, current_button):
-        text = self.edit_var.get()
-        text += current_button.cget("text")
-        self.edit_var.set(text)
+        if self.edit_var.get().isdigit() or self.edit_var.get() == "":
+            text = self.edit_var.get()
+            text += current_button.cget("text")
+            self.edit_var.set(text)
 
     def day_state(self, status):
         with open("variables.py", "w") as f:
@@ -374,4 +398,4 @@ class App(tkm.ThemedTKinterFrame):
 
 
 if __name__ == '__main__':
-    App()
+    App( "sun-valley", "dark") # azure / sun-valley / park
