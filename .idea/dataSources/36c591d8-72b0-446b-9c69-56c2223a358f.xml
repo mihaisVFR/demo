@@ -1472,115 +1472,93 @@
       <System>1</System>
     </table>
     <table id="520" parent="177" name="user"/>
-    <table id="521" parent="177" name="variables"/>
-    <column id="522" parent="518" name="id">
+    <column id="521" parent="518" name="id">
       <DataType>INTEGER|0s</DataType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="523" parent="518" name="name">
+    <column id="522" parent="518" name="name">
       <DataType>VARCHAR(32)|0s</DataType>
       <Position>2</Position>
     </column>
-    <column id="524" parent="518" name="account">
+    <column id="523" parent="518" name="account">
       <DataType>VARCHAR|0s</DataType>
       <Position>3</Position>
     </column>
-    <index id="525" parent="518" name="sqlite_autoindex_clients_1">
+    <index id="524" parent="518" name="sqlite_autoindex_clients_1">
       <ColNames>account</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <Unique>1</Unique>
     </index>
-    <key id="526" parent="518">
+    <key id="525" parent="518">
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="527" parent="518">
+    <key id="526" parent="518">
       <ColNames>account</ColNames>
       <UnderlyingIndexName>sqlite_autoindex_clients_1</UnderlyingIndexName>
     </key>
-    <column id="528" parent="519" name="type">
+    <column id="527" parent="519" name="type">
       <DataType>TEXT|0s</DataType>
       <Position>1</Position>
     </column>
-    <column id="529" parent="519" name="name">
+    <column id="528" parent="519" name="name">
       <DataType>TEXT|0s</DataType>
       <Position>2</Position>
     </column>
-    <column id="530" parent="519" name="tbl_name">
+    <column id="529" parent="519" name="tbl_name">
       <DataType>TEXT|0s</DataType>
       <Position>3</Position>
     </column>
-    <column id="531" parent="519" name="rootpage">
+    <column id="530" parent="519" name="rootpage">
       <DataType>INT|0s</DataType>
       <Position>4</Position>
     </column>
-    <column id="532" parent="519" name="sql">
+    <column id="531" parent="519" name="sql">
       <DataType>TEXT|0s</DataType>
       <Position>5</Position>
     </column>
-    <column id="533" parent="520" name="user_id">
+    <column id="532" parent="520" name="user_id">
       <DataType>INTEGER|0s</DataType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="534" parent="520" name="user_status">
+    <column id="533" parent="520" name="user_status">
       <DataType>VARCHAR(32)|0s</DataType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="535" parent="520" name="user_login">
+    <column id="534" parent="520" name="user_login">
       <DataType>VARCHAR(32)|0s</DataType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="536" parent="520" name="hash_password">
+    <column id="535" parent="520" name="hash_password">
       <DataType>VARCHAR(128)|0s</DataType>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <index id="537" parent="520" name="sqlite_autoindex_user_1">
+    <index id="536" parent="520" name="sqlite_autoindex_user_1">
       <ColNames>user_status</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <Unique>1</Unique>
     </index>
-    <index id="538" parent="520" name="sqlite_autoindex_user_2">
+    <index id="537" parent="520" name="sqlite_autoindex_user_2">
       <ColNames>user_login</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <Unique>1</Unique>
     </index>
-    <key id="539" parent="520">
+    <key id="538" parent="520">
       <ColNames>user_id</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="540" parent="520">
+    <key id="539" parent="520">
       <ColNames>user_status</ColNames>
       <UnderlyingIndexName>sqlite_autoindex_user_1</UnderlyingIndexName>
     </key>
-    <key id="541" parent="520">
+    <key id="540" parent="520">
       <ColNames>user_login</ColNames>
       <UnderlyingIndexName>sqlite_autoindex_user_2</UnderlyingIndexName>
-    </key>
-    <column id="542" parent="521" name="id">
-      <DataType>INTEGER|0s</DataType>
-      <NotNull>1</NotNull>
-      <Position>1</Position>
-    </column>
-    <column id="543" parent="521" name="name">
-      <DataType>VARCHAR(32)|0s</DataType>
-      <Position>2</Position>
-    </column>
-    <column id="544" parent="521" name="value">
-      <DataType>VARCHAR|0s</DataType>
-      <Position>3</Position>
-    </column>
-    <column id="545" parent="521" name="description">
-      <DataType>VARCHAR|0s</DataType>
-      <Position>4</Position>
-    </column>
-    <key id="546" parent="521">
-      <ColNames>id</ColNames>
-      <Primary>1</Primary>
     </key>
   </database-model>
 </dataSource>

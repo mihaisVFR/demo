@@ -4,26 +4,30 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from passlib.apps import custom_app_context as pwd_context
+from sqlalchemy import MetaData
 import json
+
+
 Base = declarative_base()
 engine = create_engine('sqlite:///adm_demo.db')
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 class User(Base):
+
     __tablename__ = "user"
     user_id = Column(Integer, primary_key=True)
     user_status = Column(String(32), unique=True, nullable=False)
     user_login = Column(String(32), unique=True, nullable=False)
     hash_password = Column(String(128), nullable=False)
 
+    def __init__(self, user_login, hash_password):
+        self.user_login = user_login
+        self.hash_password = hash_password
 
-# class Variables(Base):
-#     __tablename__ = "variables"
-#     id = Column(Integer, primary_key=True)
-#     name = Column(String(32))
-#     value = Column(String)
-#     description = Column(String, nullable=True)
+    def to_dict(self):
+        desearialaze = {"login": self.user_login, "pass": self.hash_password}
+        return desearialaze
 
 
 class Clients(Base):
@@ -32,6 +36,13 @@ class Clients(Base):
     name = Column(String(32))
     account = Column(String, unique=True)
 
+    def __init__(self, name, account):
+        self.name = name
+        self.account = account
+
+    def to_dict(self):
+        desearialaze = {"name": self.name, "account": self.account}
+        return desearialaze
 
 def create_tables():
     Base.metadata.create_all(engine)
@@ -51,14 +62,17 @@ def from_json_to_db():
 #     session.add(var)
 #     session.commit()
 
+def delete_table(class_name):
+    class_name.__table__.drop(engine)
 
-def delete():
+
+def delete_table_data():
     session.query(Clients).delete()
     session.commit()
 
 #add_variables("day_state", True, )
-
-day_state = True
-receipt_number =1
 # password = str(pwd_context.hash("123456"))
 # print(pwd_context.verify("123456",password))
+
+for a in session.query(User).all():
+    print(a.to_dict())
