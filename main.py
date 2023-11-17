@@ -13,7 +13,6 @@ import win32ui
 import win32print
 import win32ui
 from PIL import Image, ImageWin
-from variables import *
 
 
 HORZRES = 8
@@ -32,15 +31,19 @@ PHYSICALOFFSETY = 5
 
 class App(tkm.ThemedTKinterFrame):
     def __init__(self, theme, variant):
-        tkm.firstWindow = True
+
+        tkm.firstWindow = True  # when change theme must be top-level window
+
         super().__init__("ADM_show", theme, variant, useconfigfile=False)  # azure / sun-valley / park
         self.client = ""
         self.account = ""
-        self.receipt_number = f"Чек № {receipt_number}"
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
-        self.day_status = day_state
-        self.flag = True
-        self.printer_name = win32print.GetDefaultPrinter() # "KPOS_58 Printer"
+        with open("variables.json","r", encoding="utf-8") as f:
+            data = json.load(f)
+            self.day_status = data["day_state"]
+            self.receipt_number = int(data['receipt_number'])
+        self.del_flag = True
+        self.printer_name = win32print.GetDefaultPrinter()  # "KPOS_58 Printer"
         self.edit_var = tkinter.StringVar()
         if theme == "azure" or theme == "sun-valley":
             self.theme_color = '#57c8ff'
@@ -110,6 +113,7 @@ class App(tkm.ThemedTKinterFrame):
                       col=0, row=1, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
         back = frame2.Button('❮', lambda: self.select_tab(0), col=4, rowspan=2,  style='x.TButton')
         back.configure(width=1)
+
         # Tab3
         frame3 = self.tab3.addFrame("Внесение")
         deposit_frame = frame3.addLabelFrame("", col=0, row=1, colspan=5)
@@ -150,6 +154,7 @@ class App(tkm.ThemedTKinterFrame):
         self.receipt_text = self.frame5.Text("", col=1, row=3, colspan=4, sticky=N)
         back = self.frame5.Button('❮', lambda: self.select_tab(0), col=9, style='x.TButton', rowspan=5)
         back.configure(width=1)
+
         # Tab6
         self.denom_dict = {"5": 17, "10": 2, "50": 54, "100": 92, "500": 0, "1000": 1, "2000": 0, "5000": 12}
         self.frame6 = self.tab6.addFrame("Операционный день закрыт")
@@ -162,6 +167,7 @@ class App(tkm.ThemedTKinterFrame):
         self.denom_text.grid(column=0, row=3, columnspan=4, sticky=N)
         back = self.frame6.Button('❮', lambda: self.select_tab(0), col=4, rowspan=4, style='x.TButton')
         back.configure(width=1)
+
         # Tab7
         self.frame7 = self.tab7.addFrame("Операционный день открыт")
         self.label7 = self.frame7.Label("Операционный день открыт\nСчетчики обнулены"
@@ -242,8 +248,13 @@ class App(tkm.ThemedTKinterFrame):
     def receipt(self):
         receipt_table = PrettyTable(["Время внесения", "Сумма"], border=False)
         receipt_table.add_row([datetime.datetime.now().strftime("%Y-%m-%d %H.%M.%S"), "2000"])
-        receipt_total = f"{self.receipt_number}{self.adres}{self.receipt_number}\n{self.client}\n{self.account}\n" \
+        receipt_total = f"Чек № {self.receipt_number}\n{self.adres}{self.receipt_number}\n{self.client}\n{self.account}\n" \
                         f"\n{receipt_table}\n\n ИТОГО 2000"
+        self.receipt_number += 1
+
+        data = self.json_read()
+        data["receipt_number"] = int(data["receipt_number"]) + 1
+        self.json_write(data)
         self.receipt_text.configure(text=receipt_total, font="Courier", justify="center")
         self.make_qr(receipt_total)
         self.print_text(receipt_total)
@@ -330,7 +341,7 @@ class App(tkm.ThemedTKinterFrame):
         self.edit_var = self.passinputvar
 
     def backspace(self):
-        if self.flag:
+        if self.del_flag:
             text = self.edit_var.get()
             if text.isdigit():
                 new_text = text[:-1]
@@ -342,10 +353,10 @@ class App(tkm.ThemedTKinterFrame):
             threading.Timer(0.3, lambda: self.backspace()).start()
 
     def del_released(self, event):
-        self.flag = False
+        self.del_flag = False
 
     def del_pressed(self, event):
-        self.flag = True
+        self.del_flag = True
         self.backspace()
 
     def set_default_entry(self):
@@ -402,11 +413,22 @@ class App(tkm.ThemedTKinterFrame):
             self.edit_var.set(text)
 
     def day_state(self, status):
-        with open("variables.py", "w") as f:
-            if not status:
-                f.write("day_state = False")
-            else:
-                f.write("day_state = True")
+        all_variables = self.json_read()
+        if not status:
+            all_variables["day_state"] = False
+            all_variables["receipt_number"] = 1
+        else:
+            all_variables["day_state"] = True
+        self.json_write(all_variables)
+
+    def json_read(self):
+        with open("variables.json", "r", encoding="utf-8") as f:
+            all_variables = json.load(f)
+            return all_variables
+
+    def json_write(self, data):
+        with open("variables.json", "w", encoding="utf-8") as f:
+            json.dump(data, f)
 
 
 if __name__ == '__main__':
