@@ -1,3 +1,4 @@
+import threading
 import time
 import TKinterModernThemes as tkm
 import qrcode
@@ -38,6 +39,7 @@ class App(tkm.ThemedTKinterFrame):
         self.receipt_number = f"Чек № {receipt_number}"
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
         self.day_status = day_state
+        self.flag = True
         self.printer_name = win32print.GetDefaultPrinter() # "KPOS_58 Printer"
         self.edit_var = tkinter.StringVar()
         if theme == "azure" or theme == "sun-valley":
@@ -83,18 +85,21 @@ class App(tkm.ThemedTKinterFrame):
         self.user_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"))
         self.password_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"))
 
-        self.button1 = self.frame1.Button("1", lambda: self.digit_buttons(self.button1), col=0, row=2)
-        self.button2 = self.frame1.Button("2", lambda: self.digit_buttons(self.button2), col=1, row=2)
-        self.button3 = self.frame1.Button("3", lambda: self.digit_buttons(self.button3), col=2, row=2)
-        self.button4 = self.frame1.Button("4", lambda: self.digit_buttons(self.button4), col=0, row=3)
-        self.button5 = self.frame1.Button("5", lambda: self.digit_buttons(self.button5), col=1, row=3)
-        self.button6 = self.frame1.Button("6", lambda: self.digit_buttons(self.button6), col=2, row=3)
-        self.button7 = self.frame1.Button("7", lambda: self.digit_buttons(self.button7), col=0, row=4)
-        self.button8 = self.frame1.Button("8", lambda: self.digit_buttons(self.button8), col=1, row=4)
-        self.button9 = self.frame1.Button("9", lambda: self.digit_buttons(self.button9), col=2, row=4)
-        self.button0 = self.frame1.Button("   0   ", lambda: self.digit_buttons(self.button0), col=1, row=5)
+        self.button1 = self.frame1.Button("1", lambda: self.digit_buttons("1"), col=0, row=2)
+        self.button2 = self.frame1.Button("2", lambda: self.digit_buttons("2"), col=1, row=2)
+        self.button3 = self.frame1.Button("3", lambda: self.digit_buttons("3"), col=2, row=2)
+        self.button4 = self.frame1.Button("4", lambda: self.digit_buttons("4"), col=0, row=3)
+        self.button5 = self.frame1.Button("5", lambda: self.digit_buttons("5"), col=1, row=3)
+        self.button6 = self.frame1.Button("6", lambda: self.digit_buttons("6"), col=2, row=3)
+        self.button7 = self.frame1.Button("7", lambda: self.digit_buttons("7"), col=0, row=4)
+        self.button8 = self.frame1.Button("8", lambda: self.digit_buttons("8"), col=1, row=4)
+        self.button9 = self.frame1.Button("9", lambda: self.digit_buttons("9"), col=2, row=4)
+        self.button0 = self.frame1.Button("0", lambda: self.digit_buttons("0"), col=1, row=5)
+        self.button0.configure(width=5)
 
-        self.frame1.AccentButton("УДАЛ", self.backspace, col=0, row=5)
+        self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5)
+        self.button_del.bind("<ButtonRelease>", self.del_released)
+        self.button_del.bind("<ButtonPress>", self.del_pressed)
         self.frame1.AccentButton("ВВОД", self.authorization, col=2, row=5)
 
         # Tab2
@@ -299,14 +304,12 @@ class App(tkm.ThemedTKinterFrame):
         hDC.DeleteDC()
 
     def entry_insert(self, field: str):
-        if field  == "user":
+        if field == "user":
             self.user_field.delete(0, END)
-            #self.user_field.config(foreground="#434343")
             self.user_field.insert("0", "ЛОГИН")
         elif field == "pass":
             self.password_field.delete(0, END)
             self.password_field.configure(show="")
-            #elf.password_field.config(foreground="#434343")
             self.password_field.insert("0", "ПАРОЛЬ")
 
     def clear_user_entry(self):
@@ -327,14 +330,23 @@ class App(tkm.ThemedTKinterFrame):
         self.edit_var = self.passinputvar
 
     def backspace(self):
-        text = self.edit_var.get()
-        if text.isdigit():
-            new_text = text[:-1]
-            self.edit_var.set(new_text)
-        if self.password_field.get() == "":
-            self.entry_insert("pass")
-        if self.user_field.get() == "":
-            self.entry_insert("user")
+        if self.flag:
+            text = self.edit_var.get()
+            if text.isdigit():
+                new_text = text[:-1]
+                self.edit_var.set(new_text)
+            if self.password_field.get() == "":
+                self.entry_insert("pass")
+            if self.user_field.get() == "":
+                self.entry_insert("user")
+            threading.Timer(0.3, lambda: self.backspace()).start()
+
+    def del_released(self, event):
+        self.flag = False
+
+    def del_pressed(self, event):
+        self.flag = True
+        self.backspace()
 
     def set_default_entry(self):
         self.user_field.delete(0, END)
@@ -383,10 +395,10 @@ class App(tkm.ThemedTKinterFrame):
         self.user_field.config(foreground=next_color)
         self.password_field.config(foreground=next_color)
 
-    def digit_buttons(self, current_button):
+    def digit_buttons(self, digit):
         if self.edit_var.get().isdigit() or self.edit_var.get() == "":
             text = self.edit_var.get()
-            text += current_button.cget("text")
+            text += digit
             self.edit_var.set(text)
 
     def day_state(self, status):
@@ -398,4 +410,4 @@ class App(tkm.ThemedTKinterFrame):
 
 
 if __name__ == '__main__':
-    App( "sun-valley", "dark") # azure / sun-valley / park
+    App("sun-valley", "dark")  # azure / sun-valley / park
