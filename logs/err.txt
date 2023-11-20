@@ -1,0 +1,6 @@
+
+2023-11-20 12:46:26.668682 error open port 'NoneType' object is not subscriptable
+2023-11-20 12:48:21.732378 cant found UPS status after 10 try's
+2023-11-20 12:58:32.834914 cant found UPS status after 10 try's
+2023-11-20 14:02:44.565003 cant found UPS status after 10 try's
+2023-11-20 14:06:21.184105 cant found UPS status after 10 try's

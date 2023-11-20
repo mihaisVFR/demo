@@ -15,6 +15,7 @@ import win32ui
 from PIL import Image, ImageWin
 from models import get_clients, get_user
 from passlib.apps import custom_app_context as pwd_context
+from engine import *
 
 HORZRES = 8
 VERTRES = 10
@@ -454,9 +455,9 @@ class App(tkm.ThemedTKinterFrame):
         with open("variables.json", "w", encoding="utf-8") as f:
             json.dump(data, f)
 
-    def verify_password(self, password):
-
-        return pwd_context.verify(password, self.password_hash)
 
 if __name__ == '__main__':
-    App("sun-valley", "dark")  # azure / sun-valley / park
+    #App("sun-valley", "dark")  # azure / sun-valley / park
+    port = Port()
+    port.power_on_0ff(ON)
+   # port.validator_init()

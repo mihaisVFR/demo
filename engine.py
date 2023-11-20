@@ -5,7 +5,7 @@ import binascii
 import time
 from datetime import datetime
 
-# comands of power board
+# commands of power board
 ON = b'\x02\x06\x00\xff\x11\x01\xe9\x03'
 OFF = b'\x02\x06\x00\xff\x11\x00\xe8\x03'
 # commands for init validator KD10
@@ -18,7 +18,7 @@ CMD5 = b"\02\x02\xa4\x01\x00\x41\xef\x03"
 
 class Port:
     def __init__(self):
-
+        print(ON)
         self.serial_port = None
 
     def ports_dict(self) -> dict:
@@ -29,9 +29,9 @@ class Port:
         return ports_in_system
 
     def write_logs(self, mode, text):
-        if not os.path.exists("./logs/"):
-            os.makedirs("./logs/")
-        file = f"./logs/err.txt"
+        if not os.path.exists("logs/"):
+            os.makedirs("logs/")
+        file = f"logs/err.txt"
         with open(file, mode) as fil_er:
             fil_er.write(f"\n{datetime.now()} {text}")
 
@@ -46,15 +46,15 @@ class Port:
             power_desc = value
             for port, descriptor in ports_in_system.items():
                 if power_desc.lower() in descriptor.lower():
-                    return port, descriptor
+                    return port  # , descriptor
 
     def power_on_0ff(self, command):
-        port = self.find_in_descriptor("USB Serial Port")[0]
+        port = self.find_in_descriptor("USB Serial Port")
         try:
             self.serial_port = serial.Serial(port, 9600, timeout=0.4, inter_byte_timeout=0.3)
 
             for i in range(10):
-                request = self.serial_port.read(20)
+                request = self.serial_port.read_until(serial.LF, size=20)
                 if binascii.hexlify(request[4:5]) == b"10" and binascii.hexlify(request[-6:-5]) == b"00":
                     self.serial_port.write(command)
                     break
@@ -80,7 +80,7 @@ class Port:
             self.write_logs("a+", text)
 
     def validator_init(self):
-        port = self.find_in_descriptor("ch a")[0]
+        port = self.find_in_descriptor("ch a")
         try:
             self.serial_port = serial.Serial(port, 115200, timeout=0.1, inter_byte_timeout=0.1)
             time.sleep(2)
@@ -90,9 +90,9 @@ class Port:
             self.send_to_port(CMD3)
             self.send_to_port(CMD4)
             self.send_to_port(CMD5)
-            # self.serial_port.reset_input_buffer()
-            # self.serial_port.reset_output_buffer()
-            # self.serial_port.close()
+            self.serial_port.reset_input_buffer()
+            self.serial_port.reset_output_buffer()
+            self.serial_port.close()
 
         except ValueError:
             self.serial_port.close()
