@@ -18,7 +18,6 @@ CMD5 = b"\02\x02\xa4\x01\x00\x41\xef\x03"
 
 class Port:
     def __init__(self):
-        print(ON)
         self.serial_port = None
 
     def ports_dict(self) -> dict:
@@ -71,7 +70,7 @@ class Port:
                 self.serial_port.close()
 
         except Exception as e:
-            text = f"Error opening port {e}." \
+            text = f"Error opening port '{e}'." \
                    f"Power control port with 'USB Serial Port' was not found in the descriptor."
             self.write_logs("a+", text)
 
@@ -98,7 +97,7 @@ class Port:
             self.serial_port.close()
 
         except Exception as e:
-            text = f"error open port {e}"
+            text = f"error open port '{e}'"
             self.write_logs("a+", text)
 
         if not self.serial_port:
@@ -110,3 +109,7 @@ class Port:
         self.serial_port.write(data)
         # print(f"Отправленно: {binascii.hexlify(data1)}")
         # print(f"Ответ: {binascii.hexlify(self.ser.readline())}")
+
+
+class Engine:
+    pass

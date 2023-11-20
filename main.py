@@ -16,6 +16,7 @@ from PIL import Image, ImageWin
 from models import get_clients, get_user
 from passlib.apps import custom_app_context as pwd_context
 from engine import *
+import pyAesCrypt
 
 HORZRES = 8
 VERTRES = 10
@@ -39,6 +40,7 @@ class App(tkm.ThemedTKinterFrame):
         super().__init__("ADM_show", theme, variant, useconfigfile=False)  # azure / sun-valley / park
         self.client = ""
         self.account = ""
+        self.img = tkinter.PhotoImage(file="ficha.png")
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
         with open("variables.json","r", encoding="utf-8") as f:
             data = json.load(f)
@@ -398,7 +400,6 @@ class App(tkm.ThemedTKinterFrame):
             self.set_default_entry()
             self.select_tab(1)
 
-
         elif input_user == "3" and input_pass == "3":
             self.root.destroy()
             self.root.quit()
@@ -415,6 +416,14 @@ class App(tkm.ThemedTKinterFrame):
             self.root.destroy()
             self.root.quit()
             App("sun-valley", "dark")
+        elif input_user == "31" and input_pass == "31":
+            Port().power_on_0ff(OFF)
+        elif input_user == "32" and input_pass == "32":
+            Port().power_on_0ff(ON)
+            Port().validator_init()
+        elif input_user == "911" and input_pass == "119":
+            self.easter()
+
 
         else:
             self.flash()
@@ -455,9 +464,31 @@ class App(tkm.ThemedTKinterFrame):
         with open("variables.json", "w", encoding="utf-8") as f:
             json.dump(data, f)
 
+    def easter(self):
+        window = tkinter.Toplevel(borderwidth=20)  # Создаём всплывающее окно
+        window.title("О создателях")
+        window.grab_set()
+        top_level_label = ttk.Label(window, image=self.img)
+        top_level_label.grid(column=0, row=0)
+        close_buttton = ttk.Button(window, text="ЗАКРЫТЬ", command=lambda: window.destroy())
+        close_buttton.grid(column=0)
+
+    def crypt(self, file, passwor):
+        buffer_size = 256 * 512
+        pyAesCrypt.encryptFile(str(file), str(file) + ".crp", passwor, buffer_size)
+        print("[Encrypt] '" + str(file) + ".crp'")
+        os.remove(file)
+
+    def decrypt(self, file, passwor):
+        buffer_size = 256 * 512
+        pyAesCrypt.decryptFile(str(file), str(os.path.splitext(file)[0]), passwor, buffer_size)
+        print("[Decrypt] '" + str(os.path.splitext(file)[0]) + "'")
+        os.remove(file)
 
 if __name__ == '__main__':
-    #App("sun-valley", "dark")  # azure / sun-valley / park
-    port = Port()
-    port.power_on_0ff(ON)
-   # port.validator_init()
+    # port = Port()
+    # port.power_on_0ff(ON)
+    # port.validator_init()
+
+    App("sun-valley", "dark")  # azure / sun-valley / park
+
