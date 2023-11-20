@@ -13,7 +13,8 @@ import win32ui
 import win32print
 import win32ui
 from PIL import Image, ImageWin
-
+from models import get_clients, get_user
+from passlib.apps import custom_app_context as pwd_context
 
 HORZRES = 8
 VERTRES = 10
@@ -131,9 +132,7 @@ class App(tkm.ThemedTKinterFrame):
         self.frame4 = self.tab4.addFrame("Выбор счета")
         label_up = self.frame4.Label("Выберете счет для зачисления", col=0, row=0, colspan=7)
         label_up.configure(font=("Arial", int(self.screen_pad * 0.8), "bold"), foreground=self.theme_color)
-        with open('treeviewdata.json', encoding="utf-8") as f:
-            tree = json.load(f)
-        self.tree_data = self.frame4.Treeview(['Контрагент', 'Счет'], [110, 140], 3, tree,
+        self.tree_data = self.frame4.Treeview(['Контрагент', 'Счет'], [110, 140], 3, get_clients(),
                                               'subfiles', ['name', 'purpose'], col=0, row=1, colspan=7, rowspan=7)
         self.tree_data.selection_add(1)
         self.tree_data.configure(style="Treeview")
@@ -369,6 +368,25 @@ class App(tkm.ThemedTKinterFrame):
     def authorization(self):
         input_user = self.userinputvar.get()
         input_pass = self.passinputvar.get()
+        # Work with db
+        # user = get_user(input_user)
+
+        # if user and input_user != "2222":
+        #     password_hash = user["password"]
+        #     if pwd_context.verify(input_pass, password_hash):
+        #         self.set_default_entry()
+        #         if self.day_status:
+        #             self.select_tab(3)
+        #         else:
+        #             self.select_tab(7)
+        #
+        # elif user and input_user == "2222":
+        #     password_hash = user["password"]
+        #     if pwd_context.verify(input_pass, password_hash):
+        #         self.set_default_entry()
+        #         self.select_tab(1)
+
+        # Testing part need to remoove
         if input_user == "1" and input_pass == "1":
             self.set_default_entry()
             if self.day_status:
@@ -378,6 +396,8 @@ class App(tkm.ThemedTKinterFrame):
         elif input_user == "2" and input_pass == "2":
             self.set_default_entry()
             self.select_tab(1)
+
+
         elif input_user == "3" and input_pass == "3":
             self.root.destroy()
             self.root.quit()
@@ -390,6 +410,10 @@ class App(tkm.ThemedTKinterFrame):
             self.root.destroy()
             self.root.quit()
             App("park", "dark")
+        elif input_user == "6" and input_pass == "6":
+            self.root.destroy()
+            self.root.quit()
+            App("sun-valley", "dark")
 
         else:
             self.flash()
@@ -430,6 +454,9 @@ class App(tkm.ThemedTKinterFrame):
         with open("variables.json", "w", encoding="utf-8") as f:
             json.dump(data, f)
 
+    def verify_password(self, password):
+
+        return pwd_context.verify(password, self.password_hash)
 
 if __name__ == '__main__':
     App("sun-valley", "dark")  # azure / sun-valley / park

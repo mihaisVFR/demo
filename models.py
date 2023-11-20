@@ -26,7 +26,7 @@ class User(Base):
         self.hash_password = hash_password
 
     def to_dict(self):
-        desearialaze = {"login": self.user_login, "pass": self.hash_password}
+        desearialaze = {"login": self.user_login, "password": self.hash_password}
         return desearialaze
 
 
@@ -41,7 +41,7 @@ class Clients(Base):
         self.account = account
 
     def to_dict(self):
-        desearialaze = {"name": self.name, "account": self.account}
+        desearialaze = {"name": self.name, "purpose": self.account}
         return desearialaze
 
 def create_tables():
@@ -74,5 +74,19 @@ def delete_table_data():
 # password = str(pwd_context.hash("123456"))
 # print(pwd_context.verify("123456",password))
 
-for a in session.query(User).all():
-    print(a.to_dict())
+# data = session.query(Clients).all()
+# for row in data:
+#     print(row.to_dict())
+
+def get_clients():
+    data = session.query(Clients).all()
+    list_of_dict = []
+    for row in data:
+        list_of_dict.append(row.to_dict())
+    return(list_of_dict)
+
+
+def get_user(user_login):
+    data = session.query(User).filter_by(user_login=user_login).first()
+    if data is not None:
+        return data.to_dict()
