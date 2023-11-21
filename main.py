@@ -30,7 +30,20 @@ PHYSICALHEIGHT = 110
 PHYSICALOFFSETX = 5
 PHYSICALOFFSETY = 5
 
+
 #nt = ttk.Notebook
+def crypt(file, passwor):
+    buffer_size = 256 * 512
+    pyAesCrypt.encryptFile(str(file), str(file) + ".crp", passwor, buffer_size)
+    print("[Encrypt] '" + str(file) + ".crp'")
+    os.remove(file)
+
+
+def decrypt(file, passwor):
+    buffer_size = 256 * 512
+    pyAesCrypt.decryptFile(str(file), str(os.path.splitext(file)[0]), passwor, buffer_size)
+    print("[Decrypt] '" + str(os.path.splitext(file)[0]) + "'")
+    os.remove(file)
 
 class App(tkm.ThemedTKinterFrame):
     def __init__(self, theme, variant):
@@ -40,9 +53,9 @@ class App(tkm.ThemedTKinterFrame):
         super().__init__("ADM_show", theme, variant, useconfigfile=False)  # azure / sun-valley / park
         self.client = ""
         self.account = ""
-        self.img = tkinter.PhotoImage(file="ficha.png")
+        self.img = None
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
-        with open("variables.json","r", encoding="utf-8") as f:
+        with open("variables.json", "r", encoding="utf-8") as f:
             data = json.load(f)
             self.day_status = data["day_state"]
             self.receipt_number = int(data['receipt_number'])
@@ -135,7 +148,7 @@ class App(tkm.ThemedTKinterFrame):
         self.frame4 = self.tab4.addFrame("Выбор счета")
         label_up = self.frame4.Label("Выберете счет для зачисления", col=0, row=0, colspan=7)
         label_up.configure(font=("Arial", int(self.screen_pad * 0.8), "bold"), foreground=self.theme_color)
-        self.tree_data = self.frame4.Treeview(['Контрагент', 'Счет'], [110, 140], 3, get_clients(),
+        self.tree_data = self.frame4.Treeview(['Контрагент', 'Счет'], [110, 140], 3, [{"name": "", "purpose": ""}],
                                               'subfiles', ['name', 'purpose'], col=0, row=1, colspan=7, rowspan=7)
         self.tree_data.selection_add(1)
         self.tree_data.configure(style="Treeview")
@@ -372,33 +385,43 @@ class App(tkm.ThemedTKinterFrame):
         input_user = self.userinputvar.get()
         input_pass = self.passinputvar.get()
         # Work with db
-        # user = get_user(input_user)
+        user = get_user(input_user)
+        user_dict = user.to_dict()
+        if user and user_dict["status"] == "Кассир":
+            password_hash = user_dict["password"]
+            if pwd_context.verify(input_pass, password_hash):
+                self.set_default_entry()
+                if self.day_status:
+                    for i in self.tree_data.get_children():
+                        self.tree_data.delete(i)
+                    for data in user.client:
+                        tree_row = data.to_dict()
+                        self.tree_data.insert('', 'end',  text=tree_row["name"], values=tree_row["purpose"])
+                    self.select_tab(3)
+                else:
+                    self.select_tab(7)
 
-        # if user and input_user != "2222":
-        #     password_hash = user["password"]
-        #     if pwd_context.verify(input_pass, password_hash):
-        #         self.set_default_entry()
-        #         if self.day_status:
-        #             self.select_tab(3)
-        #         else:
-        #             self.select_tab(7)
-        #
-        # elif user and input_user == "2222":
-        #     password_hash = user["password"]
-        #     if pwd_context.verify(input_pass, password_hash):
-        #         self.set_default_entry()
-        #         self.select_tab(1)
+        elif user and user["status"] == "Инкассатор":
+            password_hash = user["password"]
+            if pwd_context.verify(input_pass, password_hash):
+                self.set_default_entry()
+                self.select_tab(1)
+
+        elif user and user["status"] == "Об авторах":
+            password_hash = user["password"]
+            if pwd_context.verify(input_pass, password_hash):
+                self.easter_egg(input_pass)
 
         # Testing part need to remoove
-        if input_user == "1" and input_pass == "1":
-            self.set_default_entry()
-            if self.day_status:
-                self.select_tab(3)
-            else:
-                self.select_tab(7)
-        elif input_user == "2" and input_pass == "2":
-            self.set_default_entry()
-            self.select_tab(1)
+        # if input_user == "1" and input_pass == "1":
+        #     self.set_default_entry()
+        #     if self.day_status:
+        #         self.select_tab(3)
+        #     else:
+        #         self.select_tab(7)
+        # elif input_user == "2" and input_pass == "2":
+        #     self.set_default_entry()
+        #     self.select_tab(1)
 
         elif input_user == "3" and input_pass == "3":
             self.root.destroy()
@@ -421,8 +444,7 @@ class App(tkm.ThemedTKinterFrame):
         elif input_user == "32" and input_pass == "32":
             Port().power_on_0ff(ON)
             Port().validator_init()
-        elif input_user == "911" and input_pass == "119":
-            self.easter()
+
 
 
         else:
@@ -464,31 +486,23 @@ class App(tkm.ThemedTKinterFrame):
         with open("variables.json", "w", encoding="utf-8") as f:
             json.dump(data, f)
 
-    def easter(self):
-        window = tkinter.Toplevel(borderwidth=20)  # Создаём всплывающее окно
-        window.title("О создателях")
-        window.grab_set()
-        top_level_label = ttk.Label(window, image=self.img)
-        top_level_label.grid(column=0, row=0)
-        close_buttton = ttk.Button(window, text="ЗАКРЫТЬ", command=lambda: window.destroy())
-        close_buttton.grid(column=0)
+    def easter_egg(self, password):
+        if os.path.isfile("ficha.png.crp"):
+            decrypt("ficha.png.crp", password)
+            self.img = tkinter.PhotoImage(file="ficha.png")
+            window = tkinter.Toplevel(borderwidth=20)  # Создаём всплывающее окно
+            window.title("О создателях")
+            window.grab_set()
+            top_level_label = ttk.Label(window, image=self.img)
+            top_level_label.grid(column=0, row=0)
+            close_buttton = ttk.Button(window, text="ЗАКРЫТЬ", command=lambda: window.destroy())
+            close_buttton.grid(column=0)
+            crypt("ficha.png", )
 
-    def crypt(self, file, passwor):
-        buffer_size = 256 * 512
-        pyAesCrypt.encryptFile(str(file), str(file) + ".crp", passwor, buffer_size)
-        print("[Encrypt] '" + str(file) + ".crp'")
-        os.remove(file)
-
-    def decrypt(self, file, passwor):
-        buffer_size = 256 * 512
-        pyAesCrypt.decryptFile(str(file), str(os.path.splitext(file)[0]), passwor, buffer_size)
-        print("[Decrypt] '" + str(os.path.splitext(file)[0]) + "'")
-        os.remove(file)
 
 if __name__ == '__main__':
     # port = Port()
     # port.power_on_0ff(ON)
     # port.validator_init()
-
-    App("sun-valley", "dark")  # azure / sun-valley / park
+    App("sun-valley", "dark") # azure / sun-valley / park
 
