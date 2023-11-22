@@ -4,19 +4,9 @@ import serial.tools.list_ports
 import binascii
 import time
 from datetime import datetime
+from constants import *
 
-# commands of power board
-ON = b'\x02\x06\x00\xff\x11\x01\xe9\x03'
-OFF = b'\x02\x06\x00\xff\x11\x00\xe8\x03'
-# commands for init validator KD10
-CMD1 = b"\x02\x00\xa1\xc0\x08\x03"
-CMD2 = b"\x02\x03\xa8\x01\x01\x87\x50\x52\x03"
-CMD3 = b"\x02\x04\xac\xf0\x00\x00\x00\xa2\x87\x03"
-CMD4 = b"\x02\x04\xa6\x00\x00\x00\x00\x09\x86\x03"
-CMD5 = b"\02\x02\xa4\x01\x00\x41\xef\x03"
-
-
-class Port:
+class Power_sitch:
     def __init__(self):
         self.serial_port = None
 
@@ -89,10 +79,9 @@ class Port:
             self.send_to_port(CMD3)
             self.send_to_port(CMD4)
             self.send_to_port(CMD5)
-            self.serial_port.reset_input_buffer()
+            #self.serial_port.reset_input_buffer()
             self.serial_port.reset_output_buffer()
-            self.serial_port.close()
-
+            # self.serial_port.close()
         except ValueError:
             self.serial_port.close()
 
@@ -104,12 +93,11 @@ class Port:
             text = "The validator control port with 'Ch A' was not found in the descriptor."
             self.write_logs("a+", text)
 
+        return self.serial_port
+
     def send_to_port(self, data):
         time.sleep(0.1)
         self.serial_port.write(data)
-        # print(f"Отправленно: {binascii.hexlify(data1)}")
-        # print(f"Ответ: {binascii.hexlify(self.ser.readline())}")
 
 
-class Engine:
-    pass
+

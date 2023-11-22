@@ -132,10 +132,13 @@ def refill_db():
     add_users()
     from_json_to_db()
     add_clients()
-refill_db()
+
+
+
+# refill_db()
 # add_user("Кассир", "1111", pwd_context.hash("123456"))
 # from_json_to_db()
-user = session.query(User).filter_by(user_login="1111").first()
+#user = session.query(User).filter_by(user_login="1111").first()
 # print (user.to_dict())
 # for i in user.client:
 #     print(i.to_dict())

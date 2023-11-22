@@ -12,3 +12,6 @@
 2023-11-20 15:02:47.954545 error open port 'Attempting to use a port that is not open'
 2023-11-20 16:16:14.029190 cant found UPS status after 10 try's
 2023-11-20 16:16:19.287909 error open port 'Attempting to use a port that is not open'
+2023-11-21 15:32:30.516872 cant found UPS status after 10 try's
+2023-11-21 16:50:56.046097 error open port 'name 'CMD1' is not defined'
+2023-11-21 16:57:16.136953 error open port 'name 'CMD1' is not defined'

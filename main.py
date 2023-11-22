@@ -15,8 +15,9 @@ import win32ui
 from PIL import Image, ImageWin
 from models import get_clients, get_user
 from passlib.apps import custom_app_context as pwd_context
-from engine import *
 import pyAesCrypt
+from power_switch import *
+from constants import *
 
 HORZRES = 8
 VERTRES = 10
@@ -35,37 +36,45 @@ PHYSICALOFFSETY = 5
 def crypt(file, passwor):
     buffer_size = 256 * 512
     pyAesCrypt.encryptFile(str(file), str(file) + ".crp", passwor, buffer_size)
-    print("[Encrypt] '" + str(file) + ".crp'")
+    # print("[Encrypt] '" + str(file) + ".crp'")
     os.remove(file)
 
 
 def decrypt(file, passwor):
     buffer_size = 256 * 512
     pyAesCrypt.decryptFile(str(file), str(os.path.splitext(file)[0]), passwor, buffer_size)
-    print("[Decrypt] '" + str(os.path.splitext(file)[0]) + "'")
+    # print("[Decrypt] '" + str(os.path.splitext(file)[0]) + "'")
     os.remove(file)
 
-class App(tkm.ThemedTKinterFrame):
+class App(tkm.ThemedTKinterFrame, Power_sitch):
     def __init__(self, theme, variant):
 
         tkm.firstWindow = True  # when change theme must be top-level window
-
         super().__init__("ADM_show", theme, variant, useconfigfile=False)  # azure / sun-valley / park
         self.client = ""
         self.account = ""
         self.img = None
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
+        self.port = None  # Serial port of validator
         with open("variables.json", "r", encoding="utf-8") as f:
             data = json.load(f)
             self.day_status = data["day_state"]
             self.receipt_number = int(data['receipt_number'])
+
         self.del_flag = True
         self.printer_name = win32print.GetDefaultPrinter()  # "KPOS_58 Printer"
         self.edit_var = tkinter.StringVar()
+
         if theme == "azure" or theme == "sun-valley":
             self.theme_color = '#57c8ff'
         else:
             self.theme_color = "#217346"
+
+        if variant == "light":
+            self.theme_foreground = "black"
+        else:
+            self.theme_foreground = "white"
+
         self.adres = "АДМ №213445 121096\nг.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n"
         self.label = None
         self.screen_pad = self.root.winfo_screenwidth() * 0.05
@@ -136,8 +145,8 @@ class App(tkm.ThemedTKinterFrame):
         deposit_frame = frame3.addLabelFrame("", col=0, row=1, colspan=5)
         button_frame = frame3.addFrame(name="", col=5, row=1)
 
-        label_deposit = deposit_frame.Label(text="99999999")
-        label_deposit.configure(font=("Arial", int(self.screen_pad), "bold"), width=9)
+        self.label_deposit = deposit_frame.Label(text="99999999")
+        self.label_deposit.configure(font=("Arial", int(self.screen_pad), "bold"), width=9)
         label_down = frame3.Label("Внесите банкноты.\nМаксимальное колличество:\n200 банкнот", col=0, row=0, colspan=6)
         label_down.configure(font=("Arial", int(self.screen_pad*0.8), "bold"), foreground=self.theme_color, justify="center")
         self.done = button_frame.Button('Зачислить', self.receipt)
@@ -155,7 +164,7 @@ class App(tkm.ThemedTKinterFrame):
         self.tree_data.bind("<<TreeviewSelect>>", self.tree_selection)
         back = self.frame4.Button('❮', lambda: self.select_tab(0), col=7, rowspan=9, style='x.TButton')
         back.configure(width=1)
-        self.frame4.Button(text="Выбрать", col=0, row=8, colspan=7, command=lambda: self.select_tab(2))
+        self.frame4.Button(text="Выбрать", col=0, row=8, colspan=7, command=self.deposit_start)
 
         # Tab5
         self.frame5 = self.tab5.addFrame("Заберите чек")
@@ -210,6 +219,9 @@ class App(tkm.ThemedTKinterFrame):
         #self.frame.SlideSwitch("Switch", self.bool)
         #self.togglebutton.grid(row=2, column=2)
         self.run(onlyFrames=False)
+        self.power = Power_sitch()
+        self.power.power_on_0ff(ON)
+        self.port = self.power.validator_init()
 
     def day_close(self):
         if self.day_status:
@@ -217,7 +229,7 @@ class App(tkm.ThemedTKinterFrame):
             self.day_status = False
         self.denom_text.configure(state="normal")
         self.denom_text.delete("0.0", END)
-        self.denom_text.insert(END, f"{datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')}\n{self.adres}\nВ сумке:\n", "center")
+        self.denom_text.insert(END, f"{datetime.now().strftime('%Y-%m-%d %H.%M.%S')}\n{self.adres}\nВ сумке:\n", "center")
         total = 0
         for denom, quantity in self.denom_dict.items():
             self.denom_text.insert(END, f"{denom} руб. - {quantity} шт.\n", "center")
@@ -236,7 +248,7 @@ class App(tkm.ThemedTKinterFrame):
         self.label7.configure(justify="center")
         self.denom_text1.configure(state="normal")
         self.denom_text1.delete("0.0", END)
-        self.denom_text1.insert(END, f"{datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')}\n{self.adres}\nВ сумке:\n", "center")
+        self.denom_text1.insert(END, f"{datetime.now().strftime('%Y-%m-%d %H.%M.%S')}\n{self.adres}\nВ сумке:\n", "center")
         for denom, quantity in self.denom_dict.items():
             self.denom_text1.insert(END, f"{denom} руб. - {quantity} шт.\n", "center")
         self.denom_text1.insert(END, "\nОПЕР. ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ", "center")
@@ -262,7 +274,7 @@ class App(tkm.ThemedTKinterFrame):
 
     def receipt(self):
         receipt_table = PrettyTable(["Время внесения", "Сумма"], border=False)
-        receipt_table.add_row([datetime.datetime.now().strftime("%Y-%m-%d %H.%M.%S"), "2000"])
+        receipt_table.add_row([datetime.now().strftime("%Y-%m-%d %H.%M.%S"), "2000"])
         receipt_total = f"Чек № {self.receipt_number}\n{self.adres}{self.receipt_number}\n{self.client}\n{self.account}\n" \
                         f"\n{receipt_table}\n\n ИТОГО 2000"
         self.receipt_number += 1
@@ -386,42 +398,43 @@ class App(tkm.ThemedTKinterFrame):
         input_pass = self.passinputvar.get()
         # Work with db
         user = get_user(input_user)
-        user_dict = user.to_dict()
-        if user and user_dict["status"] == "Кассир":
-            password_hash = user_dict["password"]
-            if pwd_context.verify(input_pass, password_hash):
-                self.set_default_entry()
-                if self.day_status:
-                    for i in self.tree_data.get_children():
-                        self.tree_data.delete(i)
-                    for data in user.client:
-                        tree_row = data.to_dict()
-                        self.tree_data.insert('', 'end',  text=tree_row["name"], values=tree_row["purpose"])
-                    self.select_tab(3)
-                else:
-                    self.select_tab(7)
+        if user:
+            user_dict = user.to_dict()
+            if user_dict["status"] == "Кассир":
+                password_hash = user_dict["password"]
+                if pwd_context.verify(input_pass, password_hash):
+                    self.set_default_entry()
+                    if self.day_status:
+                        for i in self.tree_data.get_children():
+                            self.tree_data.delete(i)
+                        for data in user.client:
+                            tree_row = data.to_dict()
+                            self.tree_data.insert('', 'end',  text=tree_row["name"], values=tree_row["purpose"])
+                        self.select_tab(3)
+                    else:
+                        self.select_tab(7)
 
-        elif user and user["status"] == "Инкассатор":
-            password_hash = user["password"]
-            if pwd_context.verify(input_pass, password_hash):
-                self.set_default_entry()
-                self.select_tab(1)
+            elif user_dict["status"] == "Инкассатор":
+                password_hash = user_dict["password"]
+                if pwd_context.verify(input_pass, password_hash):
+                    self.set_default_entry()
+                    self.select_tab(1)
 
-        elif user and user["status"] == "Об авторах":
-            password_hash = user["password"]
-            if pwd_context.verify(input_pass, password_hash):
-                self.easter_egg(input_pass)
+            elif user_dict["status"] == "Об авторах":
+                password_hash = user_dict["password"]
+                if pwd_context.verify(input_pass, password_hash):
+                    self.easter_egg(input_pass)
 
-        # Testing part need to remoove
-        # if input_user == "1" and input_pass == "1":
-        #     self.set_default_entry()
-        #     if self.day_status:
-        #         self.select_tab(3)
-        #     else:
-        #         self.select_tab(7)
-        # elif input_user == "2" and input_pass == "2":
-        #     self.set_default_entry()
-        #     self.select_tab(1)
+            # Testing part need to remoove
+            # if input_user == "1" and input_pass == "1":
+            #     self.set_default_entry()
+            #     if self.day_status:
+            #         self.select_tab(3)
+            #     else:
+            #         self.select_tab(7)
+            # elif input_user == "2" and input_pass == "2":
+            #     self.set_default_entry()
+            #     self.select_tab(1)
 
         elif input_user == "3" and input_pass == "3":
             self.root.destroy()
@@ -440,13 +453,10 @@ class App(tkm.ThemedTKinterFrame):
             self.root.quit()
             App("sun-valley", "dark")
         elif input_user == "31" and input_pass == "31":
-            Port().power_on_0ff(OFF)
+            Power_sitch().power_on_0ff(OFF)
         elif input_user == "32" and input_pass == "32":
-            Port().power_on_0ff(ON)
-            Port().validator_init()
-
-
-
+            Power_sitch().power_on_0ff(ON)
+            self.validator_init()
         else:
             self.flash()
             self.root.update_idletasks()
@@ -456,7 +466,7 @@ class App(tkm.ThemedTKinterFrame):
     def flash(self):
         current_color = self.user_field.cget("foreground")
         if str(current_color) == "red":
-            next_color = "white"
+            next_color = self.theme_foreground
         else:
             next_color = "red"
         self.user_field.config(foreground=next_color)
@@ -489,20 +499,179 @@ class App(tkm.ThemedTKinterFrame):
     def easter_egg(self, password):
         if os.path.isfile("ficha.png.crp"):
             decrypt("ficha.png.crp", password)
-            self.img = tkinter.PhotoImage(file="ficha.png")
-            window = tkinter.Toplevel(borderwidth=20)  # Создаём всплывающее окно
-            window.title("О создателях")
-            window.grab_set()
-            top_level_label = ttk.Label(window, image=self.img)
-            top_level_label.grid(column=0, row=0)
-            close_buttton = ttk.Button(window, text="ЗАКРЫТЬ", command=lambda: window.destroy())
-            close_buttton.grid(column=0)
-            crypt("ficha.png", )
+        self.img = tkinter.PhotoImage(file="ficha.png")
+        window = tkinter.Toplevel(borderwidth=20)  # Создаём всплывающее окно
+        window.title("О создателях")
+        window.grab_set()
+        top_level_label = ttk.Label(window, image=self.img)
+        top_level_label.grid(column=0, row=0)
+        close_buttton = ttk.Button(window, text="ЗАКРЫТЬ", command=lambda: window.destroy())
+        close_buttton.grid(column=0)
+        crypt("ficha.png", password)
+
+
+
+
+    def deposit_start(self):
+
+        self.read_data_from_port()
+        self.select_tab(2)
+
+    def validator_init(self):
+        self.label_deposit.configure(text="232323")
+        port = self.find_in_descriptor("ch a")
+        try:
+            self.serial_port = serial.Serial(port, 115200, timeout=0.1, inter_byte_timeout=0.1)
+            time.sleep(2)
+            # Инициализация
+            self.send_to_port(CMD1)
+            self.send_to_port(CMD2)
+            self.send_to_port(CMD3)
+            self.send_to_port(CMD4)
+            self.send_to_port(CMD5)
+            # self.serial_port.flush()
+            # self.serial_port.reset_output_buffer()
+            # self.serial_port.close()
+
+        except ValueError:
+            self.serial_port.close()
+
+        except Exception as e:
+            text = f"error open port '{e}'"
+            self.write_logs("a+", text)
+
+        if not self.serial_port:
+            text = "The validator control port with 'Ch A' was not found in the descriptor."
+            self.write_logs("a+", text)
+
+    def send_to_port(self, data):
+        time.sleep(0.1)
+        self.serial_port.write(data)
+        # print(f"Отправленно: {binascii.hexlify(data1)}")
+        # print(f"Ответ: {binascii.hexlify(self.ser.readline())}")
+
+    def start(self):
+        # self.read_data_from_port()
+        # self.sc_listr = []
+        self.sc_list = "22"
+        self.label_deposit.configure(text=f"{str(sum(self.sc_list))}")
+        self.send_to_port(CMD_B1)
+        self.send_to_port(CMD_B2)
+
+    def read_data_from_port(self):
+        """Считываем данные с порта"""
+        data = self.port.read_until(serial.LF)  # , size=len_in_buffer)
+        event = binascii.hexlify(data[2:3])  # байт события a23
+        error_hex = binascii.hexlify(data[60:61])  # байт ошибки aerr
+        denom_hex_first = binascii.hexlify(data[52:53])  # номинал просчета 16-ричный adenom
+        denom_byte = data[52:53]  # adenom1
+        denom_hex_second = binascii.hexlify(data[53:54])  # adenom2
+        reject_reason = binascii.hexlify(data[8:10])
+        chain_indicator = binascii.hexlify(data[10:60])
+
+        if len(data) > 0:
+            print(f"\nОтвет  {binascii.hexlify(data)}\n")
+
+            #
+
+            #
+            # if event == b"48":  # Реакция на 48 событие
+            #     self.serial_port.write(self.sen.cmd48)
+            #     self.skrtxt.insert(END, f"\nПОЛУЧЕН ОТЧЕТ ОБ ОШИБКЕ СОБЫТИЕ 48\n")
+            #     self.skrtxt.tag_configure("cmd_", foreground="red", font=("Arial", 30), justify='center')
+            #     self.skrtxt.see("end")
+            #
+            if event == b"21":  # Реакция Hoper on событие
+                self.start()
+            #
+            # if event == b"22":  # Реакция Hoper off событие
+            #     self.start()
+            #         if binascii.hexlify(self.data[2: 3]) == b"28":  # Реакция на 28 on событие
+            #             self.ser.write(self.sen.cmd_rejoff)
+            #             self.skrtxt.insert(END, f"\nБАНКНОТ НЕТ В REJECT\n")
+            #             self.skrtxt.see("end")
+            #
+            #if binascii.hexlify(data[2: 3]) == b"27":  # Реакция на Banknotes Exist on Reject событие
+                #self.start()
+        threading.Timer(0.1, self.read_data_from_port).start()  # запускаем функцию read1 заново каждую 0.01
+    #         if binascii.hexlify(self.data[2: 3]) == b"41":  # Реакция на 41 on событие
+    #             self.ser.write(self.sen.cmd_answb5)
+    #             self.skrtxt.insert(END, f"\nПРИНЯТ ОТЧЁТ О СБРОСЕ ОШИБОК\n")
+    #             self.skrtxt.see("end")
+    #
+    #         if binascii.hexlify(self.data[2: 3]) == b"24":  # Реакция на 24 on событие
+    #
+    #             self.ser.write(self.sen.cmd_answ24)
+    #             self.skrtxt.insert(END, f"\nПРИНЯТA КОМАНДА SEND COUNT INFO\n")
+    #             self.skrtxt.see("end")
+    #
+    #         if binascii.hexlify(self.data) == b'00' * 28 or binascii.hexlify(self.data) == b'00' * 29 or \
+    #                 binascii.hexlify(self.data) == b'00' * 36:  # порт питания открыт не в 9600
+    #
+    #             self.btn_pwr_o.configure(state="normal")
+    #             self.btn_pwr_of.configure(state="normal")
+    #             self.speed_9600()
+    #             self.active = False
+    #             # self.skrtxt.insert(END, f"\nОТКРЫТ ПОРТ УПРАВЛЕНИЯ ПИТАНИЕМ\nНАЖМИТЕ КНОПКУ "
+    #             #                         f"ВКЛЮЧЕНИЕ/ВЫКЛЮЧЕНИЕ ПИТАНИЯ", "power")
+    #             # self.skrtxt.tag_configure("power", foreground="Green", font=("Arial", 20, "bold"), justify='center')
+    #             # self.skrtxt.see("end")
+    #
+    #         if binascii.hexlify(self.data[2: 3]) == b"45":  # Реакция на 45 on событие
+    #             if binascii.hexlify(self.data[3: 4]) == b"00":
+    #
+    #                 self.ser.write(self.sen.cmd_answ24)
+    #                 self.skrtxt.insert(END, f"\nПРИНЯТA КОМАНДА Deposit Ready Status OFF\n\n"
+    #                                         f"Отправлено\n{self.sen.cmd_answ24}\n")
+    #                 self.skrtxt.see("end")
+    #             else:
+    #                 self.ser.write(self.sen.cmd_answ24)
+    #                 self.skrtxt.insert(END, f"\nПРИНЯТA КОМАНДА Deposit Ready Status ON\n\n"
+    #                                         f"Отправлено\n{self.sen.cmd_answ24}\n")
+    #                 self.skrtxt.see("end")
+    #
+    #         if len(self.data) > 1 and self.a23 == b"23" and self.aerr == b"00":  # если событие 23 и нет ошибки
+    #
+    #             # Пустой список в инициализации класса
+    #             if self.adenom1 < b'fe':
+    #                 self.line = int(self.adenom, 16)  # номинал просчета десятичный
+    #                 self.sc_list.append(self.line)  # добавляем очередной результат просчета в список
+    #
+    #             elif self.adenom1 > b'fe':
+    #                 # Включение второго байта для купюр номиналом более 200рэ
+    #                 first = self.adenom
+    #                 second = self.adenom2
+    #                 self.lines = (second + first)
+    #                 self.line = int(self.lines, 16)  # номинал просчета десятичный
+    #                 self.sc_list.append(self.line)
+    #
+    #             self.conf_count_num()  # Вызываем кнопку
+    #
+    #         if 1 < len(self.data) and self.aerr in self.sen.reason.keys() \
+    #                 and self.rejerr != b"0000" and self.a23 != b'24':
+    #             # если ошибка в списке ошибок и код ошибки отличается от 0000
+    #             for key, self.value in self.sen.reco_err.items():
+    #                 if self.rejerr == self.value:
+    #                     self.sc_listr.append(key)
+    #                     self.btn_rejj.config(text=f"РЕДЖЕКТ\n         {len(self.sc_listr)}")
+    #
+    #         # else:
+    #         #     pass
+    #
+    #         if len(self.data) > 1 and self.a23 == b"23" and self.aduble == b'00' * 50:
+    #             self.sc_listr.append("Несколько банкнот сразу")
+    #
+    #         if self.active:
+    #             threading.Timer(0.01, self.read1).start()  # запускаем функцию read1 заново каждую 0.01
+    #
+    # def conf_count_num(self):
+    #     if not self.flag_rej_cont:
+    #         self.btn_cont.config(text=f"ПРОСЧИТАНО\n     {len(self.sc_list)}шт.  {str(sum(self.sc_list))}")
+    #     elif self.flag_rej_cont:
+    #         self.btn_cont.config(text=f"ПРОСЧИТАНО\n             {str(sum(self.sc_list))}")
 
 
 if __name__ == '__main__':
-    # port = Port()
-    # port.power_on_0ff(ON)
-    # port.validator_init()
-    App("sun-valley", "dark") # azure / sun-valley / park
+    App("sun-valley", "dark")
+
 
