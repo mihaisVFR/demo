@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from constants import *
 
-class Power_sitch:
+class Engine:
     def __init__(self):
         self.serial_port = None
 
@@ -41,9 +41,8 @@ class Power_sitch:
         port = self.find_in_descriptor("USB Serial Port")
         try:
             self.serial_port = serial.Serial(port, 9600, timeout=0.4, inter_byte_timeout=0.3)
-
             for i in range(10):
-                request = self.serial_port.read_until(serial.LF, size=20)
+                request = self.serial_port.read_until(expected="\n", size=20)
                 if binascii.hexlify(request[4:5]) == b"10" and binascii.hexlify(request[-6:-5]) == b"00":
                     self.serial_port.write(command)
                     break
@@ -71,7 +70,8 @@ class Power_sitch:
     def validator_init(self):
         port = self.find_in_descriptor("ch a")
         try:
-            self.serial_port = serial.Serial(port, 115200, timeout=0.1, inter_byte_timeout=0.1)
+            # stopbits=serial.STOPBITS_ONE, dsrdtr=True, inter_byte_timeout=0.05
+            self.serial_port = serial.Serial(port, 115200, timeout=0.1)
             time.sleep(2)
             # Инициализация
             self.send_to_port(CMD1)
@@ -79,7 +79,7 @@ class Power_sitch:
             self.send_to_port(CMD3)
             self.send_to_port(CMD4)
             self.send_to_port(CMD5)
-            #self.serial_port.reset_input_buffer()
+            self.serial_port.reset_input_buffer()
             self.serial_port.reset_output_buffer()
             # self.serial_port.close()
         except ValueError:

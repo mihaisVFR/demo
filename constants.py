@@ -1,6 +1,15 @@
+# printers values
+HORZRES = 8
+VERTRES = 10
+LOGPIXELSX = 88
+LOGPIXELSY = 90
+PHYSICALWIDTH = 110
+PHYSICALHEIGHT = 110
+PHYSICALOFFSETX = 5
+PHYSICALOFFSETY = 5
 # commands of power board
-ON = b'\x02\x06\x00\xff\x11\x01\xe9\x03'
-OFF = b'\x02\x06\x00\xff\x11\x00\xe8\x03'
+TURN_ON = b'\x02\x06\x00\xff\x11\x01\xe9\x03'
+TURN_OFF = b'\x02\x06\x00\xff\x11\x00\xe8\x03'
 # commands for init validator KD10
 CMD1 = b"\x02\x00\xa1\xc0\x08\x03"
 CMD2 = b"\x02\x03\xa8\x01\x01\x87\x50\x52\x03"

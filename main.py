@@ -1,5 +1,4 @@
 import threading
-import time
 import TKinterModernThemes as tkm
 import qrcode
 import tkinter
@@ -8,31 +7,22 @@ from tkinter import ttk
 import json
 import datetime
 from prettytable import PrettyTable
-from PIL import ImageTk, Image
-import win32ui
+from PIL import ImageTk
 import win32print
 import win32ui
 from PIL import Image, ImageWin
-from models import get_clients, get_user
+from models import get_user
 from passlib.apps import custom_app_context as pwd_context
 import pyAesCrypt
-from power_switch import *
+from engine import *
 from constants import *
-
-HORZRES = 8
-VERTRES = 10
-
-LOGPIXELSX = 88
-LOGPIXELSY = 90
-
-PHYSICALWIDTH = 110
-PHYSICALHEIGHT = 110
-
-PHYSICALOFFSETX = 5
-PHYSICALOFFSETY = 5
+from struct import unpack
+from load import *
+# from multiprocessing import Process
+from subprocess import Popen
+from multiprocessing import *
 
 
-#nt = ttk.Notebook
 def crypt(file, passwor):
     buffer_size = 256 * 512
     pyAesCrypt.encryptFile(str(file), str(file) + ".crp", passwor, buffer_size)
@@ -46,16 +36,16 @@ def decrypt(file, passwor):
     # print("[Decrypt] '" + str(os.path.splitext(file)[0]) + "'")
     os.remove(file)
 
-class App(tkm.ThemedTKinterFrame, Power_sitch):
+class App(tkm.ThemedTKinterFrame):
     def __init__(self, theme, variant):
-
         tkm.firstWindow = True  # when change theme must be top-level window
         super().__init__("ADM_show", theme, variant, useconfigfile=False)  # azure / sun-valley / park
         self.client = ""
         self.account = ""
         self.img = None
-        self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
-        self.port = None  # Serial port of validator
+        self.count = 0
+        self.denom_dict = {5: 0, 10: 0, 50: 0, 100: 0, 200: 0, 500: 0, 1000: 0, 2000: 0, 5000: 0}
+        self.start_read_flag = False
         with open("variables.json", "r", encoding="utf-8") as f:
             data = json.load(f)
             self.day_status = data["day_state"]
@@ -82,6 +72,8 @@ class App(tkm.ThemedTKinterFrame, Power_sitch):
         # Global styles
         self.style = ttk.Style()
         self.style.configure('TButton', font=("Arial", int(self.screen_pad*0.9), "bold"), justify='center')
+        self.style.configure('accept.TButton', font=("Arial", int(self.screen_pad * 0.9), "bold"), justify='center',
+                             foreground="red")
         self.style.configure('x.TButton', font=("Arial", int(self.screen_pad*0.5), "bold"), foreground="red")
         self.style.configure('Treeview', font=("Arial", int(self.screen_pad*0.55)), rowheight=75)
         self.style.configure('Treeview.Heading', font=("Arial", 40))
@@ -142,15 +134,17 @@ class App(tkm.ThemedTKinterFrame, Power_sitch):
 
         # Tab3
         frame3 = self.tab3.addFrame("Внесение")
-        deposit_frame = frame3.addLabelFrame("", col=0, row=1, colspan=5)
-        button_frame = frame3.addFrame(name="", col=5, row=1)
-
-        self.label_deposit = deposit_frame.Label(text="99999999")
-        self.label_deposit.configure(font=("Arial", int(self.screen_pad), "bold"), width=9)
-        label_down = frame3.Label("Внесите банкноты.\nМаксимальное колличество:\n200 банкнот", col=0, row=0, colspan=6)
-        label_down.configure(font=("Arial", int(self.screen_pad*0.8), "bold"), foreground=self.theme_color, justify="center")
+        deposit_frame = frame3.addLabelFrame("", col=0, row=2,)
+        denom_frame = frame3.addLabelFrame("", col=0, row=0,rowspan=2 )
+        button_frame = frame3.addFrame(name="", col=2, row=1, rowspan=2)
+        self.label_denoms = denom_frame.Label(text=self.dict_to_text(self.denom_dict))
+        self.label_deposit = deposit_frame.Label(text=self.count, col=0, row=1)
+        self.label_deposit.configure(font=("Arial", int(self.screen_pad), "bold"), justify="center")
+        self.label_denoms.configure(font=("Arial", int(self.screen_pad*0.45), "bold"), width=25, justify="left")
+        label_down = frame3.Label("Внесите банкноты.\nМаксимальное\nколличество-\n200 банкнот", col=2, row=0)
+        label_down.configure(font=("Arial", int(self.screen_pad*0.6), "bold"), foreground=self.theme_color, justify="center")
         self.done = button_frame.Button('Зачислить', self.receipt)
-        back = frame3.Button('❮', lambda: self.select_tab(3), col=6, rowspan=2, style='x.TButton')
+        back = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style='x.TButton')
         back.configure(width=1)
 
         # Tab4
@@ -164,7 +158,7 @@ class App(tkm.ThemedTKinterFrame, Power_sitch):
         self.tree_data.bind("<<TreeviewSelect>>", self.tree_selection)
         back = self.frame4.Button('❮', lambda: self.select_tab(0), col=7, rowspan=9, style='x.TButton')
         back.configure(width=1)
-        self.frame4.Button(text="Выбрать", col=0, row=8, colspan=7, command=self.deposit_start)
+        self.accept_button = self.frame4.Button(text="Выбрать", col=0, row=8, colspan=7, command=self.deposit_start)
 
         # Tab5
         self.frame5 = self.tab5.addFrame("Заберите чек")
@@ -200,7 +194,7 @@ class App(tkm.ThemedTKinterFrame, Power_sitch):
         self.label7.configure(foreground=self.theme_color)
         self.frame7.Seperator(col=0, row=2, colspan=4)
         self.denom_text1 = tkinter.Text(self.frame7.master, font=("Arial", int(self.screen_pad * 0.25)),
-                                       height=self.screen_pad * 0.25, border=False)
+                                        height=self.screen_pad * 0.25, border=False)
         self.denom_text1.tag_configure("center", justify='center')
         self.denom_text1.grid(column=0, row=3, columnspan=4, sticky=N)
         back = self.frame7.Button('❮', lambda: self.select_tab(0), col=4, rowspan=4, style='x.TButton')
@@ -217,11 +211,22 @@ class App(tkm.ThemedTKinterFrame, Power_sitch):
         #self.bool = tkinter.BooleanVar()
         #self.togglebutton = self.frame.ToggleButton(text="Toggle button", variable=self.bool)
         #self.frame.SlideSwitch("Switch", self.bool)
-        #self.togglebutton.grid(row=2, column=2)
+        # self.togglebutton.grid(row=2, column=2)
+        self.engine = Engine()
+        self.engine.power_on_0ff(TURN_ON)
+        self.port = self.engine.validator_init()
+        self.root.withdraw()
+        self.root.after(1000, self.finish_load)
+        self.root.after(1000, self.show)
         self.run(onlyFrames=False)
-        self.power = Power_sitch()
-        self.power.power_on_0ff(ON)
-        self.port = self.power.validator_init()
+
+
+    def show(self):
+        self.root.deiconify()
+
+    def finish_load(self):
+        data = self.json_read()
+        Popen(f"taskkill /F /PID {data['load_pid']}")
 
     def day_close(self):
         if self.day_status:
@@ -244,7 +249,7 @@ class App(tkm.ThemedTKinterFrame, Power_sitch):
         if not self.day_status:
             self.day_state(True)
             self.day_status = True
-        self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
+        self.denom_dict = {5: 0, 10: 0, 50: 0, 100: 0, 200: 0, 500: 0, 1000: 0, 2000: 0, 5000: 0}
         self.label7.configure(justify="center")
         self.denom_text1.configure(state="normal")
         self.denom_text1.delete("0.0", END)
@@ -453,24 +458,26 @@ class App(tkm.ThemedTKinterFrame, Power_sitch):
             self.root.quit()
             App("sun-valley", "dark")
         elif input_user == "31" and input_pass == "31":
-            Power_sitch().power_on_0ff(OFF)
+            self.engine.power_on_0ff(TURN_OFF)
         elif input_user == "32" and input_pass == "32":
-            Power_sitch().power_on_0ff(ON)
-            self.validator_init()
+            self.engine.power_on_0ff(TURN_ON)
+            self.engine.validator_init()
+        elif input_user == "55" and input_pass == "55":
+            self.engine.send_to_port(CMD_B5)
         else:
-            self.flash()
+            self.flash(self.user_field, self.password_field)
             self.root.update_idletasks()
             time.sleep(0.1)
-            self.flash()
+            self.flash(self.user_field, self.password_field)
 
-    def flash(self):
+    def flash(self, field, field1):
         current_color = self.user_field.cget("foreground")
         if str(current_color) == "red":
             next_color = self.theme_foreground
         else:
             next_color = "red"
-        self.user_field.config(foreground=next_color)
-        self.password_field.config(foreground=next_color)
+        field.config(foreground=next_color)
+        field1.config(foreground=next_color)
 
     def digit_buttons(self, digit):
         if self.edit_var.get().isdigit() or self.edit_var.get() == "":
@@ -509,169 +516,112 @@ class App(tkm.ThemedTKinterFrame, Power_sitch):
         close_buttton.grid(column=0)
         crypt("ficha.png", password)
 
-
+    def dict_to_text(self, dct):
+        text = ""
+        for key, value in dct.items():
+            text += f"{key} : {value}\n"
+        return text
 
 
     def deposit_start(self):
-
-        self.read_data_from_port()
-        self.select_tab(2)
-
-    def validator_init(self):
-        self.label_deposit.configure(text="232323")
-        port = self.find_in_descriptor("ch a")
+        self.start_read_flag = True
         try:
-            self.serial_port = serial.Serial(port, 115200, timeout=0.1, inter_byte_timeout=0.1)
-            time.sleep(2)
-            # Инициализация
-            self.send_to_port(CMD1)
-            self.send_to_port(CMD2)
-            self.send_to_port(CMD3)
-            self.send_to_port(CMD4)
-            self.send_to_port(CMD5)
-            # self.serial_port.flush()
-            # self.serial_port.reset_output_buffer()
-            # self.serial_port.close()
-
-        except ValueError:
-            self.serial_port.close()
-
+            self.read_data_from_port()
+            self.select_tab(2)
         except Exception as e:
-            text = f"error open port '{e}'"
-            self.write_logs("a+", text)
-
-        if not self.serial_port:
-            text = "The validator control port with 'Ch A' was not found in the descriptor."
-            self.write_logs("a+", text)
-
-    def send_to_port(self, data):
-        time.sleep(0.1)
-        self.serial_port.write(data)
-        # print(f"Отправленно: {binascii.hexlify(data1)}")
-        # print(f"Ответ: {binascii.hexlify(self.ser.readline())}")
+            self.engine.write_logs("a+", f"\n{e}")
+            self.accept_button.configure(style="accept.TButton")
+            self.root.update_idletasks()
+            time.sleep(0.3)
+            self.accept_button.configure(style="TButton")
 
     def start(self):
         # self.read_data_from_port()
         # self.sc_listr = []
         self.sc_list = "22"
-        self.label_deposit.configure(text=f"{str(sum(self.sc_list))}")
-        self.send_to_port(CMD_B1)
-        self.send_to_port(CMD_B2)
+        self.label_deposit.configure(text="22")  # f"{str(sum(self.sc_list))}")
+        self.engine.send_to_port(CMD_B1)
+        self.engine.send_to_port(CMD_B2)
 
     def read_data_from_port(self):
-        """Считываем данные с порта"""
-        data = self.port.read_until(serial.LF)  # , size=len_in_buffer)
-        event = binascii.hexlify(data[2:3])  # байт события a23
-        error_hex = binascii.hexlify(data[60:61])  # байт ошибки aerr
-        denom_hex_first = binascii.hexlify(data[52:53])  # номинал просчета 16-ричный adenom
-        denom_byte = data[52:53]  # adenom1
-        denom_hex_second = binascii.hexlify(data[53:54])  # adenom2
-        reject_reason = binascii.hexlify(data[8:10])
-        chain_indicator = binascii.hexlify(data[10:60])
+        if self.start_read_flag:
+            self.port.reset_input_buffer()
+            self.port.reset_output_buffer()
+            data = self.port.read_until("\n")
+            event = binascii.hexlify(data[2:3])  # байт события
+            error_hex = binascii.hexlify(data[60:61])  # байт ошибки aerr
+            denom_hex_first = binascii.hexlify(data[52:53])  # номинал просчета 16-ричный adenom
+            denom_byte = data[52:54]  # adenom1
+            denom_hex_second = binascii.hexlify(data[53:54])  # adenom2
+            reject_reason = binascii.hexlify(data[8:10])
+            chain_indicator = binascii.hexlify(data[10:60])
 
-        if len(data) > 0:
-            print(f"\nОтвет  {binascii.hexlify(data)}\n")
+            if len(data) > 0:
+                print(f"Ответ  {binascii.hexlify(data)}\n")
 
-            #
+                if event == b"48":  # Реакция на 48 событие ПОЛУЧЕН ОТЧЕТ ОБ ОШИБКЕ
+                    self.port.write(RESP_48)
+                if event == b"21":  # Реакция Hoper on событие
+                    self.start()
+                if event == b"22":  # Реакция Hoper off событие
+                    self.port.write(RESP_HOP_OFF)
+                if event == b"28":  # Реакция Banknotes don't Exist Reject событие
+                    self.port.write(RESP_REJ_OFF)
+                if event == b"27":  # Реакция на Banknotes Exist on Reject событие
+                    self.port.write(RESP_REJ_ON)
+                if event == b"41":  # Реакция Send SC initialize Status & Result событие ПРИНЯТ ОТЧЁТ О СБРОСЕ ОШИБОК
+                    self.port.write(RESP_B5)
+                if event == b"24":  # Реакция Send Counting Result событие (данные просчета)
+                    self.port.write(RESP_24)
+                if event == b"45":  # Реакция Deposit Ready Status событие
+                    self.port.write(RESP_45)
+                if event == b"23" and error_hex == b"00":  # if count event and there is no error
+                    nominal = unpack("<h", denom_byte)  # little-endian
+                    self.denom_dict[nominal[0]] += 1
+                    self.count += nominal[0]
 
-            #
-            # if event == b"48":  # Реакция на 48 событие
-            #     self.serial_port.write(self.sen.cmd48)
-            #     self.skrtxt.insert(END, f"\nПОЛУЧЕН ОТЧЕТ ОБ ОШИБКЕ СОБЫТИЕ 48\n")
-            #     self.skrtxt.tag_configure("cmd_", foreground="red", font=("Arial", 30), justify='center')
-            #     self.skrtxt.see("end")
-            #
-            if event == b"21":  # Реакция Hoper on событие
-                self.start()
-            #
-            # if event == b"22":  # Реакция Hoper off событие
-            #     self.start()
-            #         if binascii.hexlify(self.data[2: 3]) == b"28":  # Реакция на 28 on событие
-            #             self.ser.write(self.sen.cmd_rejoff)
-            #             self.skrtxt.insert(END, f"\nБАНКНОТ НЕТ В REJECT\n")
-            #             self.skrtxt.see("end")
-            #
-            #if binascii.hexlify(data[2: 3]) == b"27":  # Реакция на Banknotes Exist on Reject событие
-                #self.start()
-        threading.Timer(0.1, self.read_data_from_port).start()  # запускаем функцию read1 заново каждую 0.01
-    #         if binascii.hexlify(self.data[2: 3]) == b"41":  # Реакция на 41 on событие
-    #             self.ser.write(self.sen.cmd_answb5)
-    #             self.skrtxt.insert(END, f"\nПРИНЯТ ОТЧЁТ О СБРОСЕ ОШИБОК\n")
-    #             self.skrtxt.see("end")
-    #
-    #         if binascii.hexlify(self.data[2: 3]) == b"24":  # Реакция на 24 on событие
-    #
-    #             self.ser.write(self.sen.cmd_answ24)
-    #             self.skrtxt.insert(END, f"\nПРИНЯТA КОМАНДА SEND COUNT INFO\n")
-    #             self.skrtxt.see("end")
-    #
-    #         if binascii.hexlify(self.data) == b'00' * 28 or binascii.hexlify(self.data) == b'00' * 29 or \
-    #                 binascii.hexlify(self.data) == b'00' * 36:  # порт питания открыт не в 9600
-    #
-    #             self.btn_pwr_o.configure(state="normal")
-    #             self.btn_pwr_of.configure(state="normal")
-    #             self.speed_9600()
-    #             self.active = False
-    #             # self.skrtxt.insert(END, f"\nОТКРЫТ ПОРТ УПРАВЛЕНИЯ ПИТАНИЕМ\nНАЖМИТЕ КНОПКУ "
-    #             #                         f"ВКЛЮЧЕНИЕ/ВЫКЛЮЧЕНИЕ ПИТАНИЯ", "power")
-    #             # self.skrtxt.tag_configure("power", foreground="Green", font=("Arial", 20, "bold"), justify='center')
-    #             # self.skrtxt.see("end")
-    #
-    #         if binascii.hexlify(self.data[2: 3]) == b"45":  # Реакция на 45 on событие
-    #             if binascii.hexlify(self.data[3: 4]) == b"00":
-    #
-    #                 self.ser.write(self.sen.cmd_answ24)
-    #                 self.skrtxt.insert(END, f"\nПРИНЯТA КОМАНДА Deposit Ready Status OFF\n\n"
-    #                                         f"Отправлено\n{self.sen.cmd_answ24}\n")
-    #                 self.skrtxt.see("end")
-    #             else:
-    #                 self.ser.write(self.sen.cmd_answ24)
-    #                 self.skrtxt.insert(END, f"\nПРИНЯТA КОМАНДА Deposit Ready Status ON\n\n"
-    #                                         f"Отправлено\n{self.sen.cmd_answ24}\n")
-    #                 self.skrtxt.see("end")
-    #
-    #         if len(self.data) > 1 and self.a23 == b"23" and self.aerr == b"00":  # если событие 23 и нет ошибки
-    #
-    #             # Пустой список в инициализации класса
-    #             if self.adenom1 < b'fe':
-    #                 self.line = int(self.adenom, 16)  # номинал просчета десятичный
-    #                 self.sc_list.append(self.line)  # добавляем очередной результат просчета в список
-    #
-    #             elif self.adenom1 > b'fe':
-    #                 # Включение второго байта для купюр номиналом более 200рэ
-    #                 first = self.adenom
-    #                 second = self.adenom2
-    #                 self.lines = (second + first)
-    #                 self.line = int(self.lines, 16)  # номинал просчета десятичный
-    #                 self.sc_list.append(self.line)
-    #
-    #             self.conf_count_num()  # Вызываем кнопку
-    #
-    #         if 1 < len(self.data) and self.aerr in self.sen.reason.keys() \
-    #                 and self.rejerr != b"0000" and self.a23 != b'24':
-    #             # если ошибка в списке ошибок и код ошибки отличается от 0000
-    #             for key, self.value in self.sen.reco_err.items():
-    #                 if self.rejerr == self.value:
-    #                     self.sc_listr.append(key)
-    #                     self.btn_rejj.config(text=f"РЕДЖЕКТ\n         {len(self.sc_listr)}")
-    #
-    #         # else:
-    #         #     pass
-    #
-    #         if len(self.data) > 1 and self.a23 == b"23" and self.aduble == b'00' * 50:
-    #             self.sc_listr.append("Несколько банкнот сразу")
-    #
-    #         if self.active:
-    #             threading.Timer(0.01, self.read1).start()  # запускаем функцию read1 заново каждую 0.01
-    #
-    # def conf_count_num(self):
-    #     if not self.flag_rej_cont:
-    #         self.btn_cont.config(text=f"ПРОСЧИТАНО\n     {len(self.sc_list)}шт.  {str(sum(self.sc_list))}")
-    #     elif self.flag_rej_cont:
-    #         self.btn_cont.config(text=f"ПРОСЧИТАНО\n             {str(sum(self.sc_list))}")
+
+                if 1 < len(self.data) and self.aerr in self.sen.reason.keys() \
+                        and self.rejerr != b"0000" and self.a23 != b'24':
+                    # если ошибка в списке ошибок и код ошибки отличается от 0000
+                    for key, self.value in self.sen.reco_err.items():
+                        if self.rejerr == self.value:
+                            self.sc_listr.append(key)
+                            self.btn_rejj.config(text=f"РЕДЖЕКТ\n         {len(self.sc_listr)}")
+
+                # else:
+                #     pass
+
+                if len(self.data) > 1 and self.a23 == b"23" and self.aduble == b'00' * 50:
+                    self.sc_listr.append("Несколько банкнот сразу")
+
+                if self.active:
+                    threading.Timer(0.01, self.read1).start()  # запускаем функцию read1 заново каждую 0.01
+        #
+        # def conf_count_num(self):
+        #     if not self.flag_rej_cont:
+        #         self.btn_cont.config(text=f"ПРОСЧИТАНО\n     {len(self.sc_list)}шт.  {str(sum(self.sc_list))}")
+        #     elif self.flag_rej_cont:
+        #         self.btn_cont.config(text=f"ПРОСЧИТАНО\n             {str(sum(self.sc_list))}")
+
+
+def app():
+    App("sun-valley", "dark")
+
+
+def load():
+    Load().main()
 
 
 if __name__ == '__main__':
-    App("sun-valley", "dark")
+    freeze_support()
+    thread1 = Process(target=load)
+    thread2 = Process(target=app)
+    thread1.start()
+    thread2.start()
+
+
+
+
 
 
