@@ -477,6 +477,8 @@ class App(Tkm.ThemedTKinterFrame):
             self.engine.validator_init()
         elif input_user == "55" and input_pass == "55":
             self.engine.send_to_port(CMD_B5)
+        elif input_user == "03" and input_pass == "03":
+            self.handleExit()
         else:
             self.flashing()
 
