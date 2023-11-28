@@ -7,7 +7,7 @@ class Load:
     def __init__(self):
 
         data = self.json_read()
-        data['load_pid'] = getpid()
+        data[0]['load_pid'] = getpid()
         self.json_write(data)
 
         self.root = Tk()

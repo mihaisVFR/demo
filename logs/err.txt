@@ -11,3 +11,21 @@
 2023-11-27 14:33:49.688038 cant found UPS status after 10 try's
 2023-11-27 15:17:52.058014 cant found UPS status after 10 try's
 2023-11-27 15:18:38.562627 cant found UPS status after 10 try's
+2023-11-27 16:04:20.804503 cant found UPS status after 10 try's
+2023-11-27 16:21:44.643300 
+str() argument 2 must be str, not type
+2023-11-27 16:21:46.936865 
+str() argument 2 must be str, not type
+2023-11-27 16:21:58.008956 
+str() argument 2 must be str, not type
+2023-11-27 17:24:34.887503 cant found UPS status after 10 try's
+2023-11-27 17:40:37.561145 cant found UPS status after 10 try's
+2023-11-27 18:17:33.924752 cant found UPS status after 10 try's
+2023-11-27 18:23:30.048843 cant found UPS status after 10 try's
+2023-11-27 18:25:36.635024 cant found UPS status after 10 try's
+2023-11-27 19:58:24.753666 Too_Close_2nd_Candidate
+2023-11-27 19:58:25.780241 Insert chain detected
+2023-11-27 20:02:29.600282 cant found UPS status after 10 try's
+2023-11-27 20:41:49.682849 cant found UPS status after 10 try's
+2023-11-28 08:09:35.833978 cant found UPS status after 10 try's
+2023-11-28 08:27:15.118521 cant found UPS status after 10 try's

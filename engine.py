@@ -71,7 +71,7 @@ class Engine:
         port = self.find_in_descriptor("ch a")
         try:
             # stopbits=serial.STOPBITS_ONE, dsrdtr=True, inter_byte_timeout=0.05
-            self.serial_port = serial.Serial(port, 115200, timeout=0.1)
+            self.serial_port = serial.Serial(port, 115200, timeout=0.05, stopbits=serial.STOPBITS_ONE, dsrdtr=True, inter_byte_timeout=0.05)
             time.sleep(2)
             # Инициализация
             self.send_to_port(CMD1)
