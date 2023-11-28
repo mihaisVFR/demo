@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 from constants import *
 
+
 class Engine:
     def __init__(self):
         self.serial_port = None
@@ -71,7 +72,8 @@ class Engine:
         port = self.find_in_descriptor("ch a")
         try:
             # stopbits=serial.STOPBITS_ONE, dsrdtr=True, inter_byte_timeout=0.05
-            self.serial_port = serial.Serial(port, 115200, timeout=0.05, stopbits=serial.STOPBITS_ONE, dsrdtr=True, inter_byte_timeout=0.05)
+            self.serial_port = serial.Serial(port, 115200, timeout=0.06, stopbits=serial.STOPBITS_ONE,
+                                             dsrdtr=True, inter_byte_timeout=0.06)
             time.sleep(2)
             # Инициализация
             self.send_to_port(CMD1)
@@ -98,6 +100,3 @@ class Engine:
     def send_to_port(self, data):
         time.sleep(0.1)
         self.serial_port.write(data)
-
-
-

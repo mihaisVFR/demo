@@ -1,10 +1,7 @@
 import threading
-import TKinterModernThemes as tkm
+import TKinterModernThemes as Tkm
 import qrcode
 import tkinter
-from tkinter import *
-from tkinter import ttk
-import json
 import keyboard
 import datetime
 from prettytable import PrettyTable
@@ -20,9 +17,8 @@ from engine import *
 from constants import *
 from struct import unpack
 from load import *
-# from multiprocessing import Process
+from multiprocessing import Process, freeze_support
 from subprocess import Popen
-from multiprocessing import *
 
 
 def crypt(file, passwor):
@@ -38,9 +34,10 @@ def decrypt(file, passwor):
     # print("[Decrypt] '" + str(os.path.splitext(file)[0]) + "'")
     os.remove(file)
 
-class App(tkm.ThemedTKinterFrame):
+
+class App(Tkm.ThemedTKinterFrame):
     def __init__(self, theme, variant):
-        tkm.firstWindow = True  # when change theme must be top-level window
+        Tkm.firstWindow = True  # when change theme must be top-level window
         super().__init__("ADM_show", theme, variant, useconfigfile=False)  # azure / sun-valley / park
         keyboard.add_hotkey("enter", lambda: self.enter_key())
         self.client = ""
@@ -83,7 +80,7 @@ class App(tkm.ThemedTKinterFrame):
         self.style.map('Treeview', background=[('selected', self.theme_color)], foreground=[('selected', 'black')])
         self.style.configure('TEntry', font=("Arial", int(self.screen_pad * 0.3)))
         if variant == "light":
-            self.style.configure('TFrame', borderwidth=3, relief='ridge' ) # flat, groove, raised, ridge, solid, or sunken
+            self.style.configure('TFrame', borderwidth=3, relief='ridge')  # flat,groove,raised,ridge,solid,or sunken
         self.style.layout('TNotebook.Tab', [])  # disable tabs layout
 
         # Notes
@@ -124,7 +121,7 @@ class App(tkm.ThemedTKinterFrame):
         self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5)
         self.button_del.bind("<ButtonRelease>", self.del_released)
         self.button_del.bind("<ButtonPress>", self.del_pressed)
-        self.enter = self.frame1.AccentButton("ВВОД", self.authorization, col=2, row=5) # .!notebook.!frame.!frame.!button12
+        self.enter = self.frame1.AccentButton("ВВОД", self.authorization, col=2, row=5)
         self.enter.focus_set()
 
         # Tab2
@@ -139,14 +136,20 @@ class App(tkm.ThemedTKinterFrame):
         # Tab3
         frame3 = self.tab3.addFrame("Внесение")
         deposit_frame = frame3.addLabelFrame("", col=0, row=2,)
-        denom_frame = frame3.addLabelFrame("", col=0, row=0,rowspan=2 )
+        denom_frame = frame3.addLabelFrame("", col=0, row=0, rowspan=2)
         button_frame = frame3.addFrame(name="", col=2, row=1, rowspan=2)
-        self.label_denoms = denom_frame.Label(text=self.dict_to_text(self.denom_dict))
+        self.label_denoms = denom_frame.Label(text=self.dict_to_text(self.denom_dict)[0], col=0)
+        self.label_quantity = denom_frame.Label(text=self.dict_to_text(self.denom_dict)[1], col=1)
         self.label_deposit = deposit_frame.Label(text=self.count, col=0, row=1)
         self.label_deposit.configure(font=("Arial", int(self.screen_pad), "bold"), justify="center")
-        self.label_denoms.configure(font=("Arial", int(self.screen_pad*0.45), "bold"), width=25, justify="left")
+
+        self.label_denoms.configure(font=("Arial", int(self.screen_pad*0.45), "bold"), width=12, justify="right",
+                                    foreground=self.theme_color)
+        self.label_quantity.configure(font=("Arial", int(self.screen_pad * 0.45), "bold"), width=12, justify="left")
+
         label_down = frame3.Label("Внесите банкноты.\nМаксимальное\nколличество-\n200 банкнот", col=2, row=0)
-        label_down.configure(font=("Arial", int(self.screen_pad*0.6), "bold"), foreground=self.theme_color, justify="center")
+        label_down.configure(font=("Arial", int(self.screen_pad*0.6), "bold"),
+                             foreground=self.theme_color, justify="center")
         self.done = button_frame.Button('Зачислить', self.receipt)
         self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style='x.TButton')
         self.back_button.configure(width=1)
@@ -166,64 +169,56 @@ class App(tkm.ThemedTKinterFrame):
         # Tab5
         self.frame5 = self.tab5.addFrame("Заберите чек")
         self.frame5.Label(text="", col=0, padx=self.screen_pad)
-        #self.frame5.Label(text="", row=0, col=1)
         self.qr_label = ttk.Label(self.frame5.master)
-        self.qr_label.grid(row=3, column=1, columnspan=4, sticky=N)
+        self.qr_label.grid(row=1, column=3, columnspan=2)
         self.label5 = self.frame5.Label("Заберите чек", col=1, row=0, colspan=4)
-        self.label5.configure(font=("Arial", int(self.screen_pad * 0.7)))
-        self.frame5.Seperator(col=1, row=1, colspan=4)
-        self.receipt_text = self.frame5.Text("", col=1, row=2, colspan=4, sticky=N)
+        self.label5.configure(font=("Arial", int(self.screen_pad * 0.8)))
+        self.receipt_text = self.frame5.Text("", col=1, row=1, colspan=2, sticky=N)
         back = self.frame5.Button('❮', lambda: self.select_tab(0), col=9, style='x.TButton', rowspan=7)
         back.configure(width=1)
 
         # Tab6
         self.frame6 = self.tab6.addFrame("Операционный день закрыт")
-        self.label6 = self.frame6.Label("Операционный день закрыт", size=int(self.screen_pad * 0.8), col=0, row=0, colspan=4)
+        self.label6 = self.frame6.Label("Операционный день закрыт", size=int(self.screen_pad * 0.8), col=0,
+                                        row=0, colspan=4)
         self.label6.configure(foreground=self.theme_color)
-        self.frame6.Seperator(col=0, row=2, colspan=4)
+        self.frame6.Seperator(col=0, row=1, colspan=4)
         self.denom_text = tkinter.Text(self.frame6.master, font=("Arial", int(self.screen_pad*0.25)),
-                                       height=self.screen_pad*0.25, border=False)
+                                       border=False)
         self.denom_text.tag_configure("center", justify='center')
-        self.denom_text.grid(column=0, row=3, columnspan=4, sticky=N)
-        back = self.frame6.Button('❮', lambda: self.select_tab(0), col=4, rowspan=4, style='x.TButton')
+        self.denom_text.grid(column=0, row=2, columnspan=4, rowspan=4, sticky=N)
+        back = self.frame6.Button('❮', lambda: self.select_tab(0), col=4, rowspan=6, style='x.TButton')
         back.configure(width=1)
 
         # Tab7
         self.frame7 = self.tab7.addFrame("Операционный день открыт")
-        self.label7 = self.frame7.Label("Операционный день открыт\nСчетчики обнулены"
-                                        , size=int(self.screen_pad * 0.8), col=0, row=0,
-                                        colspan=4)
+        self.label7 = self.frame7.Label("Операционный день открыт", size=int(self.screen_pad * 0.8), col=0, row=0,
+                                        colspan=4, pady=0)
         self.label7.configure(foreground=self.theme_color)
-        self.frame7.Seperator(col=0, row=2, colspan=4)
+        self.frame7.Seperator(col=0, row=1, colspan=4)
         self.denom_text1 = tkinter.Text(self.frame7.master, font=("Arial", int(self.screen_pad * 0.25)),
-                                        height=self.screen_pad * 0.25, border=False)
+                                        border=False)
         self.denom_text1.tag_configure("center", justify='center')
-        self.denom_text1.grid(column=0, row=3, columnspan=4, sticky=N)
-        back = self.frame7.Button('❮', lambda: self.select_tab(0), col=4, rowspan=4, style='x.TButton')
+        self.denom_text1.grid(column=0, row=2, columnspan=4, rowspan=4)
+        back = self.frame7.Button('❮', lambda: self.select_tab(0), col=4, rowspan=6, style='x.TButton')
         back.configure(width=1)
+
         # Tab8
         frame8 = self.tab8.addFrame("Откройте смену")
         frame_msg = frame8.addLabelFrame("", colspan=4)
-        label8 = frame_msg.Label("Операционный день закрыт.\n Для начала работы откройте\n операционный день."
-                                 , size=int(self.screen_pad * 0.8))
+        label8 = frame_msg.Label("Операционный день закрыт.\n Для начала работы откройте\n операционный день.",
+                                 size=int(self.screen_pad * 0.8))
         label8.configure(foreground=self.theme_color, justify="center")
         back = frame8.Button('❮', lambda: self.select_tab(0), col=4, style='x.TButton')
         back.configure(width=1)
 
-        #self.bool = tkinter.BooleanVar()
-        #self.togglebutton = self.frame.ToggleButton(text="Toggle button", variable=self.bool)
-        #self.frame.SlideSwitch("Switch", self.bool)
-        # self.togglebutton.grid(row=2, column=2)
         self.engine = Engine()
         self.engine.power_on_0ff(TURN_ON)
         self.port = self.engine.validator_init()
         self.root.withdraw()
         self.root.after(1000, self.finish_load)
         self.root.after(1000, self.show)
-
-        print(self.done.winfo_ismapped())
         self.run(onlyFrames=False)
-
 
     def show(self):
         self.root.deiconify()
@@ -260,31 +255,27 @@ class App(tkm.ThemedTKinterFrame):
         self.label7.configure(justify="center")
         self.denom_text1.configure(state="normal")
         self.denom_text1.delete("0.0", END)
-        self.denom_text1.insert(END, f"{datetime.now().strftime('%Y-%m-%d %H.%M.%S')}\n{self.adres}\nВ сумке:\n", "center")
+        self.denom_text1.insert(END, f"{datetime.now().strftime('%Y-%m-%d %H.%M.%S')}"
+                                     f"\n{self.adres}В сумке:\n", "center")
         for denom, quantity in self.denom_dict.items():
             self.denom_text1.insert(END, f"{denom} руб. - {quantity} шт.\n", "center")
-        self.denom_text1.insert(END, "\nОПЕР. ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ", "center")
+        self.denom_text1.insert(END, "ОПЕР. ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ", "center")
         self.denom_text1.configure(state="disabled")
         self.print_text(self.denom_text1.get("0.0", END))
         self.print_text(f" \n \n \n \n  {'_' * 23}")
         self.select_tab(6)
 
+    def current_tab(self):
+        return self.notebook.notebook.tabs().index(self.notebook.notebook.select())
+
     def select_tab(self, tab):
         self.notebook.notebook.select(tab)
-        if tab == 0:
-            self.enter.focus_set()
 
     def tree_selection(self, event):
         item = self.tree_data.item(self.tree_data.selection())
         self.client = item["text"]
         self.account = item["values"][0]
 
-        # if not self.label:
-        #     self.label = self.frame4.Text(f"{self.client} {self.account}", col=1, row=2, colspan=3, sticky=W)
-        #     self.label.configure(font=("Arial", int(self.screen_pad*0.3)))
-        #     self.frame4.Button('Подтвердить', lambda: nt[0].select(2), col=3, row=2, colspan=2, sticky=E)
-        # else:
-        #     self.label.configure(text=f"{self.client} {self.account}")
     def update_counters(self):
         data = self.json_read()
         data[0]["day_counter"] += self.count
@@ -293,22 +284,24 @@ class App(tkm.ThemedTKinterFrame):
         self.json_write(data)
 
     def receipt(self):
-        self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
-        self.count = 0
-        self.label_denoms.configure(text=self.dict_to_text(self.denom_dict))
+        self.label_quantity.configure(text=self.dict_to_text(self.denom_dict)[1])
         self.label_deposit.configure(text=self.count)
         self.update_counters()
         self.back_button.configure(state="normal")
+        date = datetime.now().strftime("%Y.%m.%d\n%H:%M:%S")
         receipt_table = PrettyTable(["Время внесения", "Сумма"], border=False)
-        receipt_table.add_row([datetime.now().strftime("%Y-%m-%d %H.%M.%S"), self.count])
-        receipt_total = f"Чек № {self.receipt_number}\n{self.adres}{self.client}\n{self.account}" \
-                        f"{self.dict_to_text(self.denom_dict)}{receipt_table}\nИТОГО {self.count}"
+        receipt_table.add_row([date, self.count])
+        receipt_table.add_row(["\n"+self.dict_to_text(self.denom_dict)[0], "\n"+self.dict_to_text(self.denom_dict)[1]])
+        receipt_table.add_row(["ИТОГО", self.count])
+        receipt_total = f"Чек № {self.receipt_number}\n{self.adres}{self.client}\n{self.account}\n\n{receipt_table}"
+        receipt_qr = f"Чек № {self.receipt_number}\n{self.adres}{self.client}\n{self.account}\n{date}" \
+                     f"\nИТОГО {self.count}"
         self.receipt_number += 1
         data = self.json_read()
         data[0]["receipt_number"] = int(data[0]["receipt_number"]) + 1
         self.json_write(data)
         self.receipt_text.configure(text=receipt_total, font="Courier", justify="center")
-        self.make_qr(receipt_total)
+        self.make_qr(receipt_qr)
         self.print_text(receipt_total)
         self.print_qr("print_qr.png")
         self.print_text(f" \n \n \n \n  {'_'* 23}")
@@ -316,6 +309,8 @@ class App(tkm.ThemedTKinterFrame):
         img = ImageTk.PhotoImage(photo)
         self.qr_label.configure(image=img)
         self.select_tab(4)
+        self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
+        self.count = 0
 
     def make_qr(self, qr_input):
         qr = qrcode.make(qr_input, box_size=3)
@@ -327,23 +322,23 @@ class App(tkm.ThemedTKinterFrame):
         x = 0
         y = 30
         string = print_text.split("\n")
-        hDC = win32ui.CreateDC()
-        hDC.CreatePrinterDC(self.printer_name)
-        hDC.StartDoc("Printing...")
-        hDC.StartPage()
+        h_dc = win32ui.CreateDC()
+        h_dc.CreatePrinterDC(self.printer_name)
+        h_dc.StartDoc("Printing...")
+        h_dc.StartPage()
         for line in string:
-            hDC.TextOut(x, y, line)
+            h_dc.TextOut(x, y, line)
             y += 30
-        hDC.EndPage()
-        hDC.EndDoc()
+        h_dc.EndPage()
+        h_dc.EndDoc()
 
     def print_qr(self, file_name):
 
-        hDC = win32ui.CreateDC()
-        hDC.CreatePrinterDC(self.printer_name)
-        printable_area = hDC.GetDeviceCaps(HORZRES), hDC.GetDeviceCaps(VERTRES)
-        printer_size = hDC.GetDeviceCaps(PHYSICALWIDTH), hDC.GetDeviceCaps(PHYSICALHEIGHT)
-        printer_margins = hDC.GetDeviceCaps(PHYSICALOFFSETX), hDC.GetDeviceCaps(PHYSICALOFFSETY)
+        h_dc = win32ui.CreateDC()
+        h_dc.CreatePrinterDC(self.printer_name)
+        printable_area = h_dc.GetDeviceCaps(HORZRES), h_dc.GetDeviceCaps(VERTRES)
+        printer_size = h_dc.GetDeviceCaps(PHYSICALWIDTH), h_dc.GetDeviceCaps(PHYSICALHEIGHT)
+        printer_margins = h_dc.GetDeviceCaps(PHYSICALOFFSETX), h_dc.GetDeviceCaps(PHYSICALOFFSETY)
 
         bmp = Pic.open(file_name)
         if bmp.size[0] > bmp.size[1]:
@@ -352,8 +347,8 @@ class App(tkm.ThemedTKinterFrame):
         ratios = [1.0 * printable_area[0] / bmp.size[0], 1.0 * printable_area[1] / bmp.size[1]]
         scale = min(ratios)
 
-        hDC.StartDoc(file_name)
-        hDC.StartPage()
+        h_dc.StartDoc(file_name)
+        h_dc.StartPage()
 
         dib = ImageWin.Dib(bmp)
         scaled_width, scaled_height = [int(scale * i) for i in bmp.size]
@@ -361,11 +356,11 @@ class App(tkm.ThemedTKinterFrame):
         y1 = int((printer_size[1] - scaled_height) / 2)
         x2 = x1 + scaled_width
         y2 = y1 + scaled_height
-        dib.draw(hDC.GetHandleOutput(), (x1, y1, x2, y2))
+        dib.draw(h_dc.GetHandleOutput(), (x1, y1, x2, y2))
 
-        hDC.EndPage()
-        hDC.EndDoc()
-        hDC.DeleteDC()
+        h_dc.EndPage()
+        h_dc.EndDoc()
+        h_dc.DeleteDC()
 
     def entry_insert(self, field: str):
         if field == "user":
@@ -378,7 +373,7 @@ class App(tkm.ThemedTKinterFrame):
 
     def clear_user_entry(self):
         self.user_field.focus_set()
-        if "ЛОГИН" in self.user_field.get()  :
+        if "ЛОГИН" in self.user_field.get():
             self.user_field.delete(0, END)
         if self.password_field.get() == "":
             self.entry_insert("pass")
@@ -537,16 +532,19 @@ class App(tkm.ThemedTKinterFrame):
         crypt("ficha.png", password)
 
     def dict_to_text(self, dct):
-        text = ""
+        text_values = ""
+        text_keys = ""
         for key, value in dct.items():
-            text += f"{key} : {value}\n"
-        return text
+            text_values += f"{value} шт.\n"
+            text_keys += f"{key} руб.\n"
+        return text_keys, text_values
 
     def deposit_start(self):
         self.count = 0
         try:
-            self.read_data_from_port()
             self.select_tab(2)
+            self.read_data_from_port()
+            self.state_butons_config("disable", "normal")
         except Exception as e:
             self.engine.write_logs("a+", f"\n{e}")
             self.accept_button.configure(style="accept.TButton")
@@ -555,9 +553,6 @@ class App(tkm.ThemedTKinterFrame):
             self.accept_button.configure(style="TButton")
 
     def start(self):
-        # self.read_data_from_port()
-        # self.sc_listr = []
-        # f"{str(sum(self.sc_list))}")
         self.engine.send_to_port(CMD_B1)
         self.engine.send_to_port(CMD_B2)
 
@@ -566,27 +561,22 @@ class App(tkm.ThemedTKinterFrame):
         self.back_button.configure(state=state_back)
 
     def read_data_from_port(self):
-        if self.count == 0:
-            self.state_butons_config("disable", "normal")
-        if ".!notebook.!frame4" in str(self.root.focus_get()):
+        if self.current_tab() == 2:
             self.port.flush()
             if self.count_event_flag:
-                data = self.port.read_until("\n")
-            else:
                 data = self.port.read(64)
+            else:
+                data = self.port.read_until("\n")
             len_data = len(data)
             data_hex = binascii.hexlify(data)
             event = data_hex[4:6]
             error_hex = data_hex[120:122]
-            error_hex_variant = data_hex[-8:-6]
             denom_byte = data[52:54]
-            denom_byte_variant = data[-12:-10]
             reject_reason = data_hex[16:20]
             chain_indicator = data_hex[20:120]
 
             if len_data > 0:
                 print(f"Ответ  {binascii.hexlify(data)}", f"{self.count_event_flag}\n")
-
                 if event == b"48":  # Реакция на 48 событие ПОЛУЧЕН ОТЧЕТ ОБ ОШИБКЕ
                     self.port.write(RESP_48)
                 if event == b"21":  # Реакция Hoper on событие
@@ -597,10 +587,10 @@ class App(tkm.ThemedTKinterFrame):
                 if event == b"22":  # Реакция Hoper off событие
                     self.port.write(RESP_HOP_OFF)
                     self.count_event_flag = False
-                    if self.count == 0:
-                        self.state_butons_config("normal", "normal")
-                    else:
+                    if self.count != 0:
                         self.state_butons_config("normal", "disable")
+                    else:
+                        self.state_butons_config("disable", "normal")
                 if event == b"28":  # Реакция Banknotes don't Exist Reject событие
                     self.port.write(RESP_REJ_OFF)
                 if event == b"27":  # Реакция на Banknotes Exist on Reject событие
@@ -614,31 +604,29 @@ class App(tkm.ThemedTKinterFrame):
 
                 if len_data == 64 and event == b"23" and error_hex == b"00":  # if count event and there is no error
                     self.event_23(denom_byte)
-                if len_data != 64 and b"3a23" in data_hex and error_hex_variant == b"00":
-                    self.event_23(denom_byte_variant)
                 if event == b"23" and chain_indicator == b'00' * 50:
                     self.engine.write_logs("a+", "Insert chain detected")
 
-                if error_hex in REJECT_GROUP.keys()  and reject_reason != b"0000" and event != b'24':
+                if error_hex in REJECT_GROUP.keys() and reject_reason != b"0000" and event != b'24':
                     for error_text, error_code in RECO_ERROR.items():
                         if reject_reason == error_code:
                             self.engine.write_logs("a+", error_text)
 
-            threading.Timer(0.05, self.read_data_from_port).start()
+            threading.Timer(0.06, self.read_data_from_port).start()
 
     def event_23(self, denom_byte):
         nominal = unpack("<h", denom_byte)  # little-endian
         self.denom_dict[str(nominal[0])] += 1
         self.count += nominal[0]
 
-        self.label_denoms.configure(text=self.dict_to_text(self.denom_dict))
+        self.label_quantity.configure(text=self.dict_to_text(self.denom_dict)[1])
         self.label_deposit.configure(text=self.count)
 
     def enter_key(self):
-        self.root.update_idletasks()
-        print(self.root.focus_get())
-        if ".!notebook.!frame.!frame." in str(self.root.focus_get()):
+        if self.current_tab() == 0:
             self.authorization()
+        if self.current_tab() == 3:
+            self.deposit_start()
 
 
 def app():
@@ -655,9 +643,3 @@ if __name__ == '__main__':
     thread2 = Process(target=app)
     thread1.start()
     thread2.start()
-
-
-
-
-
-
