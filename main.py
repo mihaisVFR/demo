@@ -39,6 +39,7 @@ class App(Tkm.ThemedTKinterFrame):
     def __init__(self, theme, variant):
         Tkm.firstWindow = True  # when change theme must be top-level window
         super().__init__("ADM_show", theme, variant, useconfigfile=False)  # azure / sun-valley / park
+        self.root.iconbitmap(default='adm.ico')
         keyboard.add_hotkey("enter", lambda: self.enter_key())
         self.client = ""
         self.account = ""
