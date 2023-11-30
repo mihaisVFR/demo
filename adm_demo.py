@@ -24,16 +24,16 @@ from multiprocessing import Process, freeze_support
 from subprocess import Popen
 
 
-def crypt(file, passwor):
+def crypt(file, password):
     buffer_size = 256 * 512
-    pyAesCrypt.encryptFile(str(file), str(file) + ".crp", passwor, buffer_size)
+    pyAesCrypt.encryptFile(str(file), str(file) + ".crp", password, buffer_size)
     # print("[Encrypt] '" + str(file) + ".crp'")
     os.remove(file)
 
 
-def decrypt(file, passwor):
+def decrypt(file, password):
     buffer_size = 256 * 512
-    pyAesCrypt.decryptFile(str(file), str(os.path.splitext(file)[0]), passwor, buffer_size)
+    pyAesCrypt.decryptFile(str(file), str(os.path.splitext(file)[0]), password, buffer_size)
     # print("[Decrypt] '" + str(os.path.splitext(file)[0]) + "'")
     os.remove(file)
 
@@ -228,9 +228,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.engine.power_on_0ff(TURN_ON)
         self.port = self.engine.validator_init()
         self.root.withdraw()
-        self.root.after(1000, self.show)
-        print("finish")
-        self.run(onlyFrames=False)
+        self.root.after(500, self.show)
 
     def show(self):
         self.root.deiconify()
@@ -488,8 +486,7 @@ class App(Tkm.ThemedTKinterFrame):
             self.engine.validator_init()
         elif input_user == "55" and input_pass == "55":
             self.engine.send_to_port(CMD_B5)
-            time.sleep(0.1)
-            self.engine.send_to_port(RESP_B5)
+            self.root.after(100, lambda: self.engine.send_to_port(RESP_B5))
         elif input_user == "03" and input_pass == "03":
             self.port.close()
             self.handleExit()
@@ -497,19 +494,12 @@ class App(Tkm.ThemedTKinterFrame):
             self.flashing()
 
     def flashing(self):
-        self.flash(self.user_field, self.password_field)
-        self.root.update_idletasks()
-        time.sleep(0.1)
-        self.flash(self.user_field, self.password_field)
+        self.flash("red")
+        self.root.after(100, lambda: self.flash("white"))
 
-    def flash(self, field, field1):
-        current_color = self.user_field.cget("foreground")
-        if str(current_color) == "red":
-            next_color = self.theme_foreground
-        else:
-            next_color = "red"
-        field.config(foreground=next_color)
-        field1.config(foreground=next_color)
+    def flash(self, color):
+        self.user_field.config(foreground=color)
+        self.password_field.config(foreground=color)
 
     def digit_buttons(self, digit):
         if self.edit_var.get().isdigit() or self.edit_var.get() == "":
@@ -558,16 +548,15 @@ class App(Tkm.ThemedTKinterFrame):
 
     def deposit_start(self):
         self.count = 0
+        self.state_butons_config("disable", "normal")
         try:
             self.select_tab(2)
             self.read_data_from_port()
-            self.state_butons_config("disable", "normal")
         except Exception as e:
             self.engine.write_logs("a+", f"\n{e}")
             self.accept_button.configure(style="accept.TButton")
-            self.root.update_idletasks()
-            time.sleep(0.3)
-            self.accept_button.configure(style="TButton")
+            self.accept_button.update_idletasks()
+            self.root.after(300, lambda: self.accept_button.configure(style="TButton" ))
 
     def start(self):
         self.engine.send_to_port(CMD_B1)
@@ -657,4 +646,4 @@ if __name__ == '__main__':
     process1.start()
     a = App()
     process1.terminate()
-    a.root.mainloop()
+    a.run(onlyFrames=False)
