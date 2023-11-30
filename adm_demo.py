@@ -48,10 +48,10 @@ def restart_program():
 class App(Tkm.ThemedTKinterFrame):
     def __init__(self):
         self.data = self.json_read()
-        theme = self.data[2]["theme"]
-        mode = self.data[2]["mode"]
+        self.theme = self.data[2]["theme"]
+        self.mode = self.data[2]["mode"]
         Tkm.firstWindow = True  # when change theme must be top-level window
-        super().__init__("ADM_show", theme, mode, useconfigfile=False)  # azure / sun-valley / park
+        super().__init__("ADM_show", self.theme, self.mode, useconfigfile=False)  # azure / sun-valley / park
         print("start")
         self.root.iconbitmap(default='adm.ico')
         keyboard.add_hotkey("enter", lambda: self.enter_key())
@@ -67,12 +67,12 @@ class App(Tkm.ThemedTKinterFrame):
         self.printer_name = win32print.GetDefaultPrinter()  # "KPOS_58 Printer"
         self.edit_var = tkinter.StringVar()
 
-        if theme == "azure" or theme == "sun-valley":
+        if self.theme == "azure" or self.theme == "sun-valley":
             self.theme_color = '#57c8ff'
         else:
             self.theme_color = "#217346"
 
-        if mode == "light":
+        if self.mode == "light":
             self.theme_foreground = "black"
         else:
             self.theme_foreground = "white"
@@ -91,7 +91,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.style.configure('Treeview.Heading', font=("Arial", 40))
         self.style.map('Treeview', background=[('selected', self.theme_color)], foreground=[('selected', 'black')])
         self.style.configure('TEntry', font=("Arial", int(self.screen_pad * 0.3)))
-        if mode == "light":
+        if self.mode == "light":
             self.style.configure('TFrame', borderwidth=3, relief='ridge')  # flat,groove,raised,ridge,solid,or sunken
         self.style.layout('TNotebook.Tab', [])  # disable tabs layout
 
@@ -162,7 +162,10 @@ class App(Tkm.ThemedTKinterFrame):
         label_down = frame3.Label("Внесите банкноты.\nМаксимальное\nколличество-\n200 банкнот", col=2, row=0)
         label_down.configure(font=("Arial", int(self.screen_pad*0.6), "bold"),
                              foreground=self.theme_color, justify="center")
-        self.done = button_frame.Button('Зачислить', self.receipt)
+        if self.theme != "park" and self.mode != "dark":
+            self.done = button_frame.Button('Зачислить', self.receipt)
+        else:
+            self.done = button_frame.AccentButton('Зачислить', self.receipt)
         self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style='x.TButton')
         self.back_button.configure(width=1)
 
@@ -555,8 +558,7 @@ class App(Tkm.ThemedTKinterFrame):
         except Exception as e:
             self.engine.write_logs("a+", f"\n{e}")
             self.accept_button.configure(style="accept.TButton")
-            self.accept_button.update_idletasks()
-            self.root.after(300, lambda: self.accept_button.configure(style="TButton" ))
+            self.root.after(300, lambda: self.accept_button.configure(style="TButton"))
 
     def start(self):
         self.engine.send_to_port(CMD_B1)
