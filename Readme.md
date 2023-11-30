@@ -39,8 +39,10 @@
 Полезное:
 Создать исполняемый файл windows используя nuitka:
 1. в файле __init__.py модуля TKinterModernThemes строки 64 и 65 на:
-theme_path = os.path.abspath(os.path.join(__file__ ,"..\\themes"))
-path = os.path.abspath(theme_path +"\\"+ theme.lower() + "\\" + theme.lower() + ".tcl")
+
+64 `theme_path = os.path.abspath(os.path.join(__file__ ,"..\\themes"))`
+65 `path = os.path.abspath(theme_path +"\\"+ theme.lower() + "\\" + theme.lower() + ".tcl")`
+
 чтобы избежать исключения tcl после сборки (invalid command "set_theme")
 2. в директорию программы должен быть путь к tcl файлам модуля TKinterModernThemes
 __file__\TKinterModernThemes\themes
