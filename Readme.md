@@ -42,10 +42,11 @@
 
 64 `theme_path = os.path.abspath(os.path.join(__file__ ,"..\\themes"))`\
 65 `path = os.path.abspath(theme_path +"\\"+ theme.lower() + "\\" + theme.lower() + ".tcl")`
-
 чтобы избежать исключения tcl после сборки (invalid command "set_theme")\
+
 2. в директорию программы должен быть путь к tcl файлам модуля TKinterModernThemes
 __file__\TKinterModernThemes\themes\
+
 3. запустить сборку командой
 `python -m nuitka --standalone --follow-imports 
 --windows-icon-from-ico=adm.ico --disable-console 
