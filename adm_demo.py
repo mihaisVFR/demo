@@ -108,8 +108,10 @@ class App(Tkm.ThemedTKinterFrame):
 
         # Tab1
         self.frame1 = self.tab1.addFrame("-")
-        self.user_field = self.frame1.Entry(textvariable=self.user_text, col=0, row=0, colspan=3)
-        self.user_field.bind("<1>", lambda event: self.clear_user_entry())
+        a = self.frame1.Entry(textvariable=self.user_text, col=0, row=0)
+        a.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"), width=5, justify="center", state='readonly')
+        self.user_field = self.frame1.Entry(textvariable=self.user_text, col=1, row=0, colspan=2)
+        self.user_field.bind("<1>", lambda event: self.clear_user_entry())  # <FocusIn>
         self.edit_field = self.user_field
         self.password_field = self.frame1.Entry(textvariable=self.password_text, col=0, row=1, colspan=3)
         self.password_field.bind("<1>", lambda event: self.clear_password_entry())
@@ -129,10 +131,10 @@ class App(Tkm.ThemedTKinterFrame):
         self.root.configure(takefocus=0)
         self.button0.configure(width=5)
 
-        self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5)
+        self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5, widgetkwargs=widgetkwargs)
         self.button_del.bind("<ButtonRelease>", self.del_released)
         self.button_del.bind("<ButtonPress>", self.del_pressed)
-        self.enter = self.frame1.AccentButton("ВВОД", self.authorization, col=2, row=5)
+        self.enter = self.frame1.AccentButton("ВВОД", self.authentication, col=2, row=5, widgetkwargs=widgetkwargs)
         self.user_field.focus_set()
 
         # Tab2
@@ -433,6 +435,20 @@ class App(Tkm.ThemedTKinterFrame):
         self.handleExit()
         restart_program()
 
+    def authentication(self):
+        if self.password_field.state() == "normal":
+            self.authorization()
+        else:
+            self.password_eneble()
+
+    def password_eneble(self):
+        input_user = self.user_field.get()
+        user = get_user(input_user)
+        if user:
+            self.password_field.configure(state="normal")
+            self.edit_field = self.password_field
+            self.password_field.focus_set()
+
     def authorization(self):
         input_user = self.user_field.get()
         input_pass = self.password_field.get()
@@ -632,7 +648,7 @@ class App(Tkm.ThemedTKinterFrame):
     def enter_key(self, event):
         tab = self.current_tab()
         if tab == 0:
-            self.authorization()
+            self.authentication()
         if tab == 3:
             self.deposit_start()
 
