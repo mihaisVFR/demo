@@ -1,47 +1,44 @@
-import sys
+from sys import exit as sys_exit
+from sys import executable as sys_executable
 from subprocess import call
-import json
-import threading
+from json import load, dump
+from threading import Timer as threading_Timer
 import TKinterModernThemes as Tkm
-import qrcode
+from qrcode import make as qrcode_make
 import tkinter
-import datetime
 from prettytable import PrettyTable
 from PIL import ImageTk
 from PIL import Image as Pic
 from PIL import ImageWin
-import win32print
-import win32ui
+from win32print import GetDefaultPrinter
+from win32ui import CreateDC as win32ui_CreateDC
 from models import get_user
 from passlib.apps import custom_app_context as pwd_context
-import pyAesCrypt
+from pyAesCrypt import encryptFile, decryptFile
 from engine import *
 from constants import *
 from struct import unpack
 from load import *
 from multiprocessing import Process, freeze_support
-from subprocess import Popen
 
 
 def crypt(file, password):
     buffer_size = 256 * 512
-    pyAesCrypt.encryptFile(str(file), str(file) + ".crp", password, buffer_size)
-    # print("[Encrypt] '" + str(file) + ".crp'")
+    encryptFile(str(file), str(file) + ".crp", password, buffer_size)
     os.remove(file)
 
 
 def decrypt(file, password):
     buffer_size = 256 * 512
-    pyAesCrypt.decryptFile(str(file), str(os.path.splitext(file)[0]), password, buffer_size)
-    # print("[Decrypt] '" + str(os.path.splitext(file)[0]) + "'")
+    decryptFile(str(file), str(os.path.splitext(file)[0]), password, buffer_size)
     os.remove(file)
 
 
 def restart_program():
     # restart the current program
-    python = sys.executable
+    python = sys_executable
     call([python, __file__])
-    sys.exit()
+    sys_exit()
 
 
 class App(Tkm.ThemedTKinterFrame):
@@ -63,7 +60,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.day_status = self.data[0]["day_state"]
         self.receipt_number = int(self.data[0]['receipt_number'])
         self.del_flag = True
-        self.printer_name = win32print.GetDefaultPrinter()  # "KPOS_58 Printer"
+        self.printer_name = GetDefaultPrinter()  # "KPOS_58 Printer"
         self.edit_var = tkinter.StringVar()
 
         if self.theme == "azure" or self.theme == "sun-valley":
@@ -187,7 +184,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.qr_label.grid(row=1, column=3, columnspan=2)
         self.label5 = self.frame5.Label("Заберите чек", col=1, row=0, colspan=4)
         self.label5.configure(font=("Arial", int(self.screen_pad * 0.8)))
-        self.receipt_text = self.frame5.Text("", col=1, row=1, colspan=2, sticky=N)
+        self.receipt_text = self.frame5.Text("", col=1, row=1, colspan=2, sticky="n")
         back = self.frame5.Button('❮', lambda: self.select_tab(0), col=9, style='x.TButton', rowspan=7)
         back.configure(width=1)
 
@@ -200,7 +197,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.denom_text = tkinter.Text(self.frame6.master, font=("Arial", int(self.screen_pad*0.25)),
                                        border=False)
         self.denom_text.tag_configure("center", justify='center')
-        self.denom_text.grid(column=0, row=2, columnspan=4, rowspan=4, sticky=N)
+        self.denom_text.grid(column=0, row=2, columnspan=4, rowspan=4, sticky="n")
         back = self.frame6.Button('❮', lambda: self.select_tab(0), col=4, rowspan=6, style='x.TButton')
         back.configure(width=1)
 
@@ -232,26 +229,25 @@ class App(Tkm.ThemedTKinterFrame):
         self.root.withdraw()
         self.root.after(500, self.show)
 
-    def key_handler(self, event):
-        print(event.char, event.keysym, event.keycode)
-
-
-
     def show(self):
         self.root.deiconify()
+
+    def datetime_now(self, date_format):
+        return datetime.now().strftime(date_format)
 
     def day_close(self):
         if self.day_status:
             self.day_state(False)
             self.day_status = False
         self.denom_text.configure(state="normal")
-        self.denom_text.delete("0.0", END)
-        self.denom_text.insert(END, f"{datetime.now().strftime('%Y-%m-%d %H.%M.%S')}\n{self.adres}В сумке:\n", "center")
+        self.denom_text.delete("0.0", "end")
+        self.denom_text.insert("end", f"{self.datetime_now('%Y-%m-%d %H.%M.%S')}\n{self.adres}В сумке:\n", "center")
         for denom, quantity in self.data[1].items():
-            self.denom_text.insert(END, f"{denom} руб. - {quantity} шт.\n", "center")
-        self.denom_text.insert(END, f"\nИТОГО {str(self.data[0]['day_counter'])} руб.\nОПЕРАЦИОННЫЙ ДЕНЬ\nЗАКРЫТ", "center")
+            self.denom_text.insert("end", f"{denom} руб. - {quantity} шт.\n", "center")
+        self.denom_text.insert("end", f"\nИТОГО {str(self.data[0]['day_counter'])}"
+                                      f" руб.\nОПЕРАЦИОННЫЙ ДЕНЬ\nЗАКРЫТ", "center")
         self.denom_text.configure(state="disabled")
-        self.print_text(self.denom_text.get("0.0", END))
+        self.print_text(self.denom_text.get("0.0", "end"))
         self.print_text(f" \n \n \n \n  {'_' * 23}")
         self.select_tab(5)
 
@@ -265,14 +261,14 @@ class App(Tkm.ThemedTKinterFrame):
             self.day_status = True
         self.label7.configure(justify="center")
         self.denom_text1.configure(state="normal")
-        self.denom_text1.delete("0.0", END)
-        self.denom_text1.insert(END, f"{datetime.now().strftime('%Y-%m-%d %H.%M.%S')}"
-                                     f"\n{self.adres}В сумке:\n", "center")
+        self.denom_text1.delete("0.0", "end")
+        self.denom_text1.insert("end", f"{self.datetime_now('%Y-%m-%d %H.%M.%S')}"
+                                f"\n{self.adres}В сумке:\n", "center")
         for denom, quantity in self.denom_dict.items():
-            self.denom_text1.insert(END, f"{denom} руб. - {quantity} шт.\n", "center")
-        self.denom_text1.insert(END, "ОПЕР. ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ", "center")
+            self.denom_text1.insert("end", f"{denom} руб. - {quantity} шт.\n", "center")
+        self.denom_text1.insert("end", "ОПЕР. ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ", "center")
         self.denom_text1.configure(state="disabled")
-        self.print_text(self.denom_text1.get("0.0", END))
+        self.print_text(self.denom_text1.get("0.0", "end"))
         self.print_text(f" \n \n \n \n  {'_' * 23}")
         self.select_tab(6)
 
@@ -298,7 +294,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.label_deposit.configure(text=self.count)
         self.update_counters()
         self.back_button.configure(state="normal")
-        date = datetime.now().strftime("%Y.%m.%d\n%H:%M:%S")
+        date = self.datetime_now("%Y.%m.%d\n%H:%M:%S")
         receipt_table = PrettyTable(["Время внесения", "Сумма"], border=False)
         receipt_table.add_row([date, self.count])
         receipt_table.add_row(["\n"+self.dict_to_text(self.denom_dict)[0], "\n"+self.dict_to_text(self.denom_dict)[1]])
@@ -322,8 +318,8 @@ class App(Tkm.ThemedTKinterFrame):
         self.count = 0
 
     def make_qr(self, qr_input):
-        qr = qrcode.make(qr_input, box_size=3)
-        qr_print = qrcode.make(qr_input, box_size=1)
+        qr = qrcode_make(qr_input, box_size=3)
+        qr_print = qrcode_make(qr_input, box_size=1)
         qr.save("tmpqr.png")
         qr_print.save("print_qr.png")
 
@@ -331,7 +327,7 @@ class App(Tkm.ThemedTKinterFrame):
         x = 0
         y = 30
         string = print_text.split("\n")
-        h_dc = win32ui.CreateDC()
+        h_dc = win32ui_CreateDC()
         h_dc.CreatePrinterDC(self.printer_name)
         h_dc.StartDoc("Printing...")
         h_dc.StartPage()
@@ -343,7 +339,7 @@ class App(Tkm.ThemedTKinterFrame):
 
     def print_qr(self, file_name):
 
-        h_dc = win32ui.CreateDC()
+        h_dc = win32ui_CreateDC()
         h_dc.CreatePrinterDC(self.printer_name)
         printable_area = h_dc.GetDeviceCaps(HORZRES), h_dc.GetDeviceCaps(VERTRES)
         printer_size = h_dc.GetDeviceCaps(PHYSICALWIDTH), h_dc.GetDeviceCaps(PHYSICALHEIGHT)
@@ -373,17 +369,17 @@ class App(Tkm.ThemedTKinterFrame):
 
     def entry_insert(self, field: str):
         if field == "user":
-            self.user_field.delete(0, END)
+            self.user_field.delete(0, "end")
             self.user_field.insert("0", "ЛОГИН")
         elif field == "pass":
-            self.password_field.delete(0, END)
+            self.password_field.delete(0, "end")
             self.password_field.configure(show="")
             self.password_field.insert("0", "ПАРОЛЬ")
 
     def clear_user_entry(self):
         self.user_field.focus_set()
         if "ЛОГИН" in self.user_field.get():
-            self.user_field.delete(0, END)
+            self.user_field.delete(0, "end")
         if self.password_field.get() == "":
             self.entry_insert("pass")
         self.edit_var = self.userinputvar
@@ -391,7 +387,7 @@ class App(Tkm.ThemedTKinterFrame):
     def clear_password_entry(self):
         self.password_field.focus_set()
         if "ПАРОЛЬ" in self.password_field.get():
-            self.password_field.delete(0, END)
+            self.password_field.delete(0, "end")
             self.password_field.configure(show="✳")
         if self.user_field.get() == "":
             self.entry_insert("user")
@@ -407,7 +403,7 @@ class App(Tkm.ThemedTKinterFrame):
                 self.entry_insert("pass")
             if self.user_field.get() == "":
                 self.entry_insert("user")
-            threading.Timer(0.3, lambda: self.backspace()).start()
+            self.root.after(100,  self.backspace)
 
     def del_released(self, event):
         self.del_flag = False
@@ -417,9 +413,9 @@ class App(Tkm.ThemedTKinterFrame):
         self.backspace()
 
     def set_default_entry(self):
-        self.user_field.delete(0, END)
+        self.user_field.delete(0, "end")
         self.user_field.insert(0, "ЛОГИН")
-        self.password_field.delete(0, END)
+        self.password_field.delete(0, "end")
         self.password_field.insert(0, "ПАРОЛЬ")
         self.password_field.configure(show="")
 
@@ -427,7 +423,7 @@ class App(Tkm.ThemedTKinterFrame):
         if self.port.is_open:
             self.port.close()
 
-    def change_theme(self,theme,mode):
+    def change_theme(self, theme, mode):
         self.port_close()
         self.data[2]["theme"] = theme
         self.data[2]["mode"] = mode
@@ -521,12 +517,12 @@ class App(Tkm.ThemedTKinterFrame):
 
     def json_read(self):
         with open("variables.json", "r", encoding="utf-8") as f:
-            all_variables = json.load(f)
+            all_variables = load(f)
             return all_variables
 
     def json_write(self, data):
         with open("variables.json", "w", encoding="utf-8") as f:
-            json.dump(data, f)
+            dump(data, f)
 
     def easter_egg(self, password):
         if os.path.isfile("ficha.png.crp"):
@@ -620,7 +616,7 @@ class App(Tkm.ThemedTKinterFrame):
                         if reject_reason == error_code:
                             self.engine.write_logs("a+", error_text)
 
-            threading.Timer(0.06, self.read_data_from_port).start()
+            threading_Timer(0.06, self.read_data_from_port).start()
 
     def event_23(self, denom_byte):
         nominal = unpack("<h", denom_byte)  # little-endian
@@ -638,14 +634,14 @@ class App(Tkm.ThemedTKinterFrame):
             self.deposit_start()
 
 
-def load():
+def loading():
     Load()
 
 
 if __name__ == '__main__':
     freeze_support()
-    process1 = Process(target=load)
+    process1 = Process(target=loading)
     process1.start()
-    a = App()
+    app = App()
     process1.terminate()
-    a.run(onlyFrames=False)
+    app.run(onlyFrames=False)

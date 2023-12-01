@@ -1,6 +1,5 @@
-from tkinter import *
+from tkinter import Tk
 from tkinter import ttk
-
 
 class Load:
     def __init__(self):
@@ -12,6 +11,6 @@ class Load:
         root.attributes('-fullscreen', True)
         root.configure(background="#1c1c1c")
         bar = ttk.Progressbar(orient="horizontal")
-        bar.pack(fill=X, padx=100, pady=y/3)
+        bar.pack(fill="x", padx=100, pady=y/3)
         bar.start()
         root.mainloop()
