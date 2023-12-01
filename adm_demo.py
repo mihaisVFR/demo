@@ -5,7 +5,6 @@ import threading
 import TKinterModernThemes as Tkm
 import qrcode
 import tkinter
-import keyboard
 import datetime
 from prettytable import PrettyTable
 from PIL import ImageTk
@@ -53,8 +52,8 @@ class App(Tkm.ThemedTKinterFrame):
         Tkm.firstWindow = True  # when change theme must be top-level window
         super().__init__("ADM_show", self.theme, self.mode, useconfigfile=False)  # azure / sun-valley / park
         print("start")
+        self.root.bind("<Return>", self.enter_key)
         self.root.iconbitmap(default='adm.ico')
-        keyboard.add_hotkey("enter", lambda: self.enter_key())
         self.client = ""
         self.account = ""
         self.img = None
@@ -233,11 +232,13 @@ class App(Tkm.ThemedTKinterFrame):
         self.root.withdraw()
         self.root.after(500, self.show)
 
+    def key_handler(self, event):
+        print(event.char, event.keysym, event.keycode)
+
+
+
     def show(self):
         self.root.deiconify()
-
-    def finish_load(self):
-        Popen(f"taskkill /F /PID {self.data[0]['load_pid']}")
 
     def day_close(self):
         if self.day_status:
@@ -276,7 +277,6 @@ class App(Tkm.ThemedTKinterFrame):
         self.select_tab(6)
 
     def current_tab(self):
-        print(self.root.winfo_ismapped())
         return self.notebook.notebook.tabs().index(self.notebook.notebook.select())
 
     def select_tab(self, tab):
@@ -630,7 +630,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.label_quantity.configure(text=self.dict_to_text(self.denom_dict)[1])
         self.label_deposit.configure(text=self.count)
 
-    def enter_key(self):
+    def enter_key(self, event):
         tab = self.current_tab()
         if tab == 0:
             self.authorization()
