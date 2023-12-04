@@ -292,6 +292,8 @@ class App(Tkm.ThemedTKinterFrame):
 
     def select_tab(self, tab):
         self.notebook.notebook.select(tab)
+        if tab == 0:
+            self.user_field.focus_set()
 
     def tree_selection(self, event):
         item = self.tree_data.item(self.tree_data.selection())
@@ -404,7 +406,6 @@ class App(Tkm.ThemedTKinterFrame):
     def set_default_entry(self):
         self.user_field.delete(0, "end")
         self.password_field.delete(0, "end")
-        self.user_field.focus_set()
 
     def port_close(self):
         if self.port.is_open:
@@ -488,7 +489,7 @@ class App(Tkm.ThemedTKinterFrame):
 
     def flashing(self):
         self.flash("red")
-        self.root.after(300, lambda: self.flash("white"))
+        self.root.after(300, lambda: self.flash(self.theme_foreground))
 
     def flash(self, color):
         self.user_field.config(foreground=color)
