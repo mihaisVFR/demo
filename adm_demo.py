@@ -64,8 +64,8 @@ class App(Tkm.ThemedTKinterFrame):
         self.del_flag = True
         self.printer_name = GetDefaultPrinter()  # "KPOS_58 Printer"
 
-        self.user_text = tkinter.StringVar(value="ЛОГИН")
-        self.password_text = tkinter.StringVar(value="ПАРОЛЬ")
+        self.user_text = tkinter.StringVar()
+        self.password_text = tkinter.StringVar()
 
         if self.theme == "azure" or self.theme == "sun-valley":
             self.theme_color = '#57c8ff'
@@ -84,6 +84,7 @@ class App(Tkm.ThemedTKinterFrame):
         # Global styles
         self.style = ttk.Style()
         self.style.configure('TButton', font=("Arial", int(self.screen_pad*0.9), "bold"), justify='center')
+        self.style.configure('eye.TButton', font=("Arial", int(self.screen_pad * 0.7), "bold"), justify='center')
         self.style.configure('accept.TButton', font=("Arial", int(self.screen_pad * 0.9), "bold"), justify='center',
                              foreground="red")
         self.style.configure('x.TButton', font=("Arial", int(self.screen_pad*0.5), "bold"), foreground="red")
@@ -108,33 +109,39 @@ class App(Tkm.ThemedTKinterFrame):
 
         # Tab1
         self.frame1 = self.tab1.addFrame("-")
-        a = self.frame1.Entry(textvariable=self.user_text, col=0, row=0)
-        a.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"), width=5, justify="center", state='readonly')
-        self.user_field = self.frame1.Entry(textvariable=self.user_text, col=1, row=0, colspan=2)
-        self.user_field.bind("<1>", lambda event: self.clear_user_entry())  # <FocusIn>
+        self.frame1.Label("ЛОГИН", int(self.screen_pad * 0.7), "bold", col=0, row=0)
+        self.frame1.Label("ПАРОЛЬ", int(self.screen_pad * 0.7), "bold", col=0, row=1)
+
+        self.user_field = self.frame1.Entry(textvariable=self.user_text, col=1, row=0)
+        self.user_field.bind("<1>", self.set_user_entry)  # <FocusIn>
         self.edit_field = self.user_field
-        self.password_field = self.frame1.Entry(textvariable=self.password_text, col=0, row=1, colspan=3)
-        self.password_field.bind("<1>", lambda event: self.clear_password_entry())
-        self.user_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"))
-        self.password_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"))
+        self.password_field = self.frame1.Entry(textvariable=self.password_text, col=1, row=1)
+        self.password_field.bind("<1>", self.set_password_entry)
+
+        self.user_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"), width=5)
+        self.password_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"), width=5, show="✳")
+
         widgetkwargs = {"takefocus": 0}
         self.button1 = self.frame1.Button("1", lambda: self.digit_buttons("1"), col=0, row=2, widgetkwargs=widgetkwargs)
         self.button2 = self.frame1.Button("2", lambda: self.digit_buttons("2"), col=1, row=2, widgetkwargs=widgetkwargs)
-        self.button3 = self.frame1.Button("3", lambda: self.digit_buttons("3"), col=2, row=2, widgetkwargs=widgetkwargs)
+        self.button3 = self.frame1.Button("3", lambda: self.digit_buttons("3"), col=2, row=2,
+                                          colspan=2, widgetkwargs=widgetkwargs)
         self.button4 = self.frame1.Button("4", lambda: self.digit_buttons("4"), col=0, row=3, widgetkwargs=widgetkwargs)
         self.button5 = self.frame1.Button("5", lambda: self.digit_buttons("5"), col=1, row=3, widgetkwargs=widgetkwargs)
-        self.button6 = self.frame1.Button("6", lambda: self.digit_buttons("6"), col=2, row=3, widgetkwargs=widgetkwargs)
+        self.button6 = self.frame1.Button("6", lambda: self.digit_buttons("6"), col=2, row=3,
+                                          colspan=2, widgetkwargs=widgetkwargs)
         self.button7 = self.frame1.Button("7", lambda: self.digit_buttons("7"), col=0, row=4, widgetkwargs=widgetkwargs)
         self.button8 = self.frame1.Button("8", lambda: self.digit_buttons("8"), col=1, row=4, widgetkwargs=widgetkwargs)
-        self.button9 = self.frame1.Button("9", lambda: self.digit_buttons("9"), col=2, row=4, widgetkwargs=widgetkwargs)
+        self.button9 = self.frame1.Button("9", lambda: self.digit_buttons("9"), col=2, row=4,
+                                          colspan=2, widgetkwargs=widgetkwargs)
         self.button0 = self.frame1.Button("0", lambda: self.digit_buttons("0"), col=1, row=5, widgetkwargs=widgetkwargs)
-        self.root.configure(takefocus=0)
-        self.button0.configure(width=5)
-
         self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5, widgetkwargs=widgetkwargs)
         self.button_del.bind("<ButtonRelease>", self.del_released)
         self.button_del.bind("<ButtonPress>", self.del_pressed)
-        self.enter = self.frame1.AccentButton("ВВОД", self.authentication, col=2, row=5, widgetkwargs=widgetkwargs)
+        self.enter = self.frame1.AccentButton("ВВОД", lambda: self.enter_key(1), col=2, row=5,
+                                              colspan=2, widgetkwargs=widgetkwargs)
+        eye_button = self.frame1.Button("👁", self.show_pass, col=2, row=1, sticky="w")
+        eye_button.configure(style="eye.TButton", width=2, takefocus=0)
         self.user_field.focus_set()
 
         # Tab2
@@ -372,41 +379,25 @@ class App(Tkm.ThemedTKinterFrame):
         h_dc.EndDoc()
         h_dc.DeleteDC()
 
-    def entry_insert(self, field: str):
-        if field == "user":
-            self.user_field.delete(0, "end")
-            self.user_field.insert("0", "ЛОГИН")
-        elif field == "pass":
-            self.password_field.delete(0, "end")
-            self.password_field.configure(show="")
-            self.password_field.insert("0", "ПАРОЛЬ")
-
-    def clear_user_entry(self):
-        self.user_field.focus_set()
-        if "ЛОГИН" in self.user_field.get():
-            self.user_field.delete(0, "end")
-        if self.password_field.get() == "":
-            self.entry_insert("pass")
+    # def entry_insert(self, field: str):
+    #     if field == "user":
+    #         self.user_field.delete(0, "end")
+    #         self.user_field.insert("0", "ЛОГИН")
+    #     elif field == "pass":
+    #         self.password_field.delete(0, "end")
+    #         self.password_field.configure(show="")
+    #         self.password_field.insert("0", "ПАРОЛЬ")
+    #
+    def set_user_entry(self, event):
         self.edit_field = self.user_field
 
-    def clear_password_entry(self):
-        self.password_field.focus_set()
-        if "ПАРОЛЬ" in self.password_field.get():
-            self.password_field.delete(0, "end")
-            self.password_field.configure(show="✳")
-        if self.user_field.get() == "":
-            self.entry_insert("user")
+    def set_password_entry(self, event):
         self.edit_field = self.password_field
 
     def backspace(self):
         if self.del_flag:
             text = self.edit_field.get()
-            if text.isdigit():
-                self.edit_field.delete(len(text)-1)
-            if self.password_field.get() == "":
-                self.entry_insert("pass")
-            if self.user_field.get() == "":
-                self.entry_insert("user")
+            self.edit_field.delete(len(text)-1)
             self.root.after(100,  self.backspace)
 
     def del_released(self, event):
@@ -418,9 +409,7 @@ class App(Tkm.ThemedTKinterFrame):
 
     def set_default_entry(self):
         self.user_field.delete(0, "end")
-        self.user_field.insert(0, "ЛОГИН")
         self.password_field.delete(0, "end")
-        self.password_field.insert(0, "ПАРОЛЬ")
         self.password_field.configure(show="")
 
     def port_close(self):
@@ -435,19 +424,12 @@ class App(Tkm.ThemedTKinterFrame):
         self.handleExit()
         restart_program()
 
-    def authentication(self):
-        if self.password_field.state() == "normal":
-            self.authorization()
-        else:
-            self.password_eneble()
+    def hide_pass(self):
+        self.password_field.configure(show="✳")
 
-    def password_eneble(self):
-        input_user = self.user_field.get()
-        user = get_user(input_user)
-        if user:
-            self.password_field.configure(state="normal")
-            self.edit_field = self.password_field
-            self.password_field.focus_set()
+    def show_pass(self):
+        self.password_field.configure(show="")
+        self.root.after(500, self.hide_pass)
 
     def authorization(self):
         input_user = self.user_field.get()
@@ -647,8 +629,17 @@ class App(Tkm.ThemedTKinterFrame):
 
     def enter_key(self, event):
         tab = self.current_tab()
+        user = self.user_field.get()
+        password = self.password_field.get()
         if tab == 0:
-            self.authentication()
+            if user and password:
+                self.authorization()
+            elif not password and user:
+                self.edit_field = self.password_field
+                self.password_field.focus_set()
+            else:
+                self.edit_field = self.user_field
+                self.user_field.focus_set()
         if tab == 3:
             self.deposit_start()
 
