@@ -50,7 +50,6 @@ class App(Tkm.ThemedTKinterFrame):
         Tkm.firstWindow = True  # when change theme must be root window
 
         super().__init__("ADM_show", self.theme, self.mode, useconfigfile=False)  # azure / sun-valley / park
-        print("start")
         self.root.bind("<Return>", self.enter_key)
         self.root.iconbitmap(default='adm.ico')
         self.client = ""
@@ -85,6 +84,9 @@ class App(Tkm.ThemedTKinterFrame):
         self.style = ttk.Style()
         self.style.configure('TButton', font=("Arial", int(self.screen_pad*0.9), "bold"), justify='center')
         self.style.configure('eye.TButton', font=("Arial", int(self.screen_pad * 0.7), "bold"), justify='center')
+        self.style.configure('park.TButton', font=("Arial", int(self.screen_pad * 0.5), "bold"), justify='center'
+                             , foreground="red")
+        self.style.map('park.TButton', foreground=[('disabled', '#706f6f')])
         self.style.configure('accept.TButton', font=("Arial", int(self.screen_pad * 0.9), "bold"), justify='center',
                              foreground="red")
         self.style.configure('x.TButton', font=("Arial", int(self.screen_pad*0.5), "bold"), foreground="red")
@@ -118,28 +120,24 @@ class App(Tkm.ThemedTKinterFrame):
         self.password_field = self.frame1.Entry(textvariable=self.password_text, col=1, row=1)
         self.password_field.bind("<1>", self.set_password_entry)
 
-        self.user_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"), width=5)
-        self.password_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"), width=5, show="✳")
+        self.user_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"), width=7)
+        self.password_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"), width=7, show="✳")
 
         widgetkwargs = {"takefocus": 0}
         self.button1 = self.frame1.Button("1", lambda: self.digit_buttons("1"), col=0, row=2, widgetkwargs=widgetkwargs)
         self.button2 = self.frame1.Button("2", lambda: self.digit_buttons("2"), col=1, row=2, widgetkwargs=widgetkwargs)
-        self.button3 = self.frame1.Button("3", lambda: self.digit_buttons("3"), col=2, row=2,
-                                          colspan=2, widgetkwargs=widgetkwargs)
+        self.button3 = self.frame1.Button("3", lambda: self.digit_buttons("3"), col=2, row=2, widgetkwargs=widgetkwargs)
         self.button4 = self.frame1.Button("4", lambda: self.digit_buttons("4"), col=0, row=3, widgetkwargs=widgetkwargs)
         self.button5 = self.frame1.Button("5", lambda: self.digit_buttons("5"), col=1, row=3, widgetkwargs=widgetkwargs)
-        self.button6 = self.frame1.Button("6", lambda: self.digit_buttons("6"), col=2, row=3,
-                                          colspan=2, widgetkwargs=widgetkwargs)
+        self.button6 = self.frame1.Button("6", lambda: self.digit_buttons("6"), col=2, row=3, widgetkwargs=widgetkwargs)
         self.button7 = self.frame1.Button("7", lambda: self.digit_buttons("7"), col=0, row=4, widgetkwargs=widgetkwargs)
         self.button8 = self.frame1.Button("8", lambda: self.digit_buttons("8"), col=1, row=4, widgetkwargs=widgetkwargs)
-        self.button9 = self.frame1.Button("9", lambda: self.digit_buttons("9"), col=2, row=4,
-                                          colspan=2, widgetkwargs=widgetkwargs)
+        self.button9 = self.frame1.Button("9", lambda: self.digit_buttons("9"), col=2, row=4, widgetkwargs=widgetkwargs)
         self.button0 = self.frame1.Button("0", lambda: self.digit_buttons("0"), col=1, row=5, widgetkwargs=widgetkwargs)
         self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5, widgetkwargs=widgetkwargs)
         self.button_del.bind("<ButtonRelease>", self.del_released)
         self.button_del.bind("<ButtonPress>", self.del_pressed)
-        self.enter = self.frame1.AccentButton("ВВОД", lambda: self.enter_key(1), col=2, row=5,
-                                              colspan=2, widgetkwargs=widgetkwargs)
+        self.enter = self.frame1.AccentButton("ВВОД", lambda: self.enter_key(1), col=2, row=5, widgetkwargs=widgetkwargs)
         eye_button = self.frame1.Button("👁", self.show_pass, col=2, row=1, sticky="w")
         eye_button.configure(style="eye.TButton", width=2, takefocus=0)
         self.user_field.focus_set()
@@ -170,12 +168,14 @@ class App(Tkm.ThemedTKinterFrame):
         label_down = frame3.Label("Внесите банкноты.\nМаксимальное\nколличество-\n200 банкнот", col=2, row=0)
         label_down.configure(font=("Arial", int(self.screen_pad*0.6), "bold"),
                              foreground=self.theme_color, justify="center")
-        if self.theme != "park" and self.mode != "dark":
-            self.done = button_frame.Button('Зачислить', self.receipt)
-        else:
+        if self.theme == "park" and self.mode == "dark":
             self.done = button_frame.AccentButton('Зачислить', self.receipt)
-        self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style='x.TButton')
-        self.back_button.configure(width=1)
+            self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style="")
+            self.back_button.configure(width=1, style="park.TButton")
+        else:
+            self.done = button_frame.Button('Зачислить', self.receipt)
+            self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style='x.TButton')
+            self.back_button.configure(width=1)
 
         # Tab4
         self.frame4 = self.tab4.addFrame("Выбор счета")
@@ -206,11 +206,11 @@ class App(Tkm.ThemedTKinterFrame):
                                         row=0, colspan=4)
         self.label6.configure(foreground=self.theme_color)
         self.frame6.Seperator(col=0, row=1, colspan=4)
-        self.denom_text = tkinter.Text(self.frame6.master, font=("Arial", int(self.screen_pad*0.25)),
+        self.denom_text = tkinter.Text(self.frame6.master, font=("Courier", int(self.screen_pad*0.23)),
                                        border=False)
         self.denom_text.tag_configure("center", justify='center')
-        self.denom_text.grid(column=0, row=2, columnspan=4, rowspan=4, sticky="n")
-        back = self.frame6.Button('❮', lambda: self.select_tab(0), col=4, rowspan=6, style='x.TButton')
+        self.denom_text.grid(column=0, row=2, columnspan=4, rowspan=4, sticky="n", ipady=0)
+        back = self.frame6.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
         back.configure(width=1)
 
         # Tab7
@@ -219,11 +219,11 @@ class App(Tkm.ThemedTKinterFrame):
                                         colspan=4, pady=0)
         self.label7.configure(foreground=self.theme_color)
         self.frame7.Seperator(col=0, row=1, colspan=4)
-        self.denom_text1 = tkinter.Text(self.frame7.master, font=("Arial", int(self.screen_pad * 0.25)),
+        self.denom_text1 = tkinter.Text(self.frame7.master, font=("Courier", int(self.screen_pad * 0.23)),
                                         border=False)
         self.denom_text1.tag_configure("center", justify='center')
-        self.denom_text1.grid(column=0, row=2, columnspan=4, rowspan=4)
-        back = self.frame7.Button('❮', lambda: self.select_tab(0), col=4, rowspan=6, style='x.TButton')
+        self.denom_text1.grid(column=0, row=2, columnspan=4, rowspan=4, ipady=0)
+        back = self.frame7.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
         back.configure(width=1)
 
         # Tab8
@@ -249,8 +249,9 @@ class App(Tkm.ThemedTKinterFrame):
 
     def day_close(self):
         if self.day_status:
-            self.day_state(False)
             self.day_status = False
+            self.data[0]["day_state"] = self.day_status
+            self.json_write(self.data)
         self.denom_text.configure(state="normal")
         self.denom_text.delete("0.0", "end")
         self.denom_text.insert("end", f"{self.datetime_now('%Y-%m-%d %H.%M.%S')}\n{self.adres}В сумке:\n", "center")
@@ -265,12 +266,14 @@ class App(Tkm.ThemedTKinterFrame):
 
     def day_open(self):
         if not self.day_status:
+            print("its open")
             self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
-            self.day_state(True)
+            self.day_status = True
             self.data[0]["day_counter"] = 0
+            self.data[0]["day_state"] = self.day_status
             self.data[1] = self.denom_dict
             self.json_write(self.data)
-            self.day_status = True
+
         self.label7.configure(justify="center")
         self.denom_text1.configure(state="normal")
         self.denom_text1.delete("0.0", "end")
@@ -379,15 +382,6 @@ class App(Tkm.ThemedTKinterFrame):
         h_dc.EndDoc()
         h_dc.DeleteDC()
 
-    # def entry_insert(self, field: str):
-    #     if field == "user":
-    #         self.user_field.delete(0, "end")
-    #         self.user_field.insert("0", "ЛОГИН")
-    #     elif field == "pass":
-    #         self.password_field.delete(0, "end")
-    #         self.password_field.configure(show="")
-    #         self.password_field.insert("0", "ПАРОЛЬ")
-    #
     def set_user_entry(self, event):
         self.edit_field = self.user_field
 
@@ -410,7 +404,7 @@ class App(Tkm.ThemedTKinterFrame):
     def set_default_entry(self):
         self.user_field.delete(0, "end")
         self.password_field.delete(0, "end")
-        self.password_field.configure(show="")
+        self.user_field.focus_set()
 
     def port_close(self):
         if self.port.is_open:
@@ -494,7 +488,7 @@ class App(Tkm.ThemedTKinterFrame):
 
     def flashing(self):
         self.flash("red")
-        self.root.after(100, lambda: self.flash("white"))
+        self.root.after(300, lambda: self.flash("white"))
 
     def flash(self, color):
         self.user_field.config(foreground=color)
