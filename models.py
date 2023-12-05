@@ -103,7 +103,7 @@ def add_user(user_status, name, password):
 def add_users():
     add_user("Кассир", "1111", "1111")
     add_user("Инкассатор", "2222", "2222")
-    add_user("Кассир", "3333", "123456")
+    add_user("Кассир", "3333", "3333")
     add_user("Об авторах", "911", "119")
 
 
