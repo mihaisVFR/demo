@@ -19,6 +19,7 @@ from engine import *
 from constants import *
 from struct import unpack
 from load import *
+# from screensaver import Screensaver
 from multiprocessing import Process, freeze_support
 
 
@@ -50,11 +51,13 @@ class App(Tkm.ThemedTKinterFrame):
         Tkm.firstWindow = True  # when change theme must be root window
 
         super().__init__("ADM_show", self.theme, self.mode, useconfigfile=False)  # azure / sun-valley / park
+
         self.root.bind("<Return>", self.enter_key)
         self.root.iconbitmap(default='adm.ico')
+        self.timer = None  # timer of screensaver
         self.client = ""
         self.account = ""
-        self.img = None
+        self.img = None # qr code image
         self.count = 0
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
         self.count_event_flag = False
@@ -108,6 +111,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.tab6 = self.notebook.addTab("Закр. опер. день")
         self.tab7 = self.notebook.addTab("Откр. опер. день")
         self.tab8 = self.notebook.addTab("Ошибка опер. день")
+        self.tab9 = self.notebook.addTab("ScreenSaver")
 
         # Tab1
         self.frame1 = self.tab1.addFrame("-")
@@ -134,12 +138,18 @@ class App(Tkm.ThemedTKinterFrame):
         self.button8 = self.frame1.Button("8", lambda: self.digit_buttons("8"), col=1, row=4, widgetkwargs=widgetkwargs)
         self.button9 = self.frame1.Button("9", lambda: self.digit_buttons("9"), col=2, row=4, widgetkwargs=widgetkwargs)
         self.button0 = self.frame1.Button("0", lambda: self.digit_buttons("0"), col=1, row=5, widgetkwargs=widgetkwargs)
-        self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5, widgetkwargs=widgetkwargs)
-        self.button_del.bind("<ButtonRelease>", self.del_released)
-        self.button_del.bind("<ButtonPress>", self.del_pressed)
         self.enter = self.frame1.AccentButton("ВВОД", lambda: self.enter_key(1), col=2, row=5, widgetkwargs=widgetkwargs)
         eye_button = self.frame1.Button("👁", self.show_pass, col=2, row=1, sticky="w")
         eye_button.configure(style="eye.TButton", width=2, takefocus=0)
+        for wiget in self.frame1.widgets:
+            if "Button" in str(wiget):
+                wiget.widget.bind("<ButtonPress>", self.screensaver)
+        for key in range(10):
+            self.root.bind(f"<KeyRelease-{key}>", self.screensaver)
+
+        self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5, widgetkwargs=widgetkwargs)
+        self.button_del.bind("<ButtonRelease>", self.del_released)
+        self.button_del.bind("<ButtonPress>", self.del_pressed)
         self.user_field.focus_set()
 
         # Tab2
@@ -235,14 +245,34 @@ class App(Tkm.ThemedTKinterFrame):
         back = frame8.Button('❮', lambda: self.select_tab(0), col=4, style='x.TButton')
         back.configure(width=1)
 
+        # Tab9
+        self.image = tkinter.PhotoImage(file="deep.png")
+        self.deep_label = ttk.Label(self.tab9.master, image=self.image)
+        self.deep_label.grid(row=0, column=0, columnspan=2)
+
         self.engine = Engine()
         self.engine.power_on_0ff(TURN_ON)
         self.port = self.engine.validator_init()
         self.root.withdraw()
+        self.screensaver()
         self.root.after(500, self.show)
 
     def show(self):
         self.root.deiconify()
+
+    def screensaver_start(self):
+        if self.current_tab() == 0:
+            self.select_tab(8)
+            self.root.bind("<1>",  self.screensaver_finish)
+
+    def screensaver_finish(self, event):
+        self.select_tab(0)
+        self.root.unbind("<1>")
+
+    def screensaver(self, event=None):
+        if self.timer is not None:
+            self.root.after_cancel(self.timer)
+        self.timer = self.root.after(300000, self.screensaver_start)
 
     def datetime_now(self, date_format):
         return datetime.now().strftime(date_format)
@@ -266,7 +296,6 @@ class App(Tkm.ThemedTKinterFrame):
 
     def day_open(self):
         if not self.day_status:
-            print("its open")
             self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
             self.day_status = True
             self.data[0]["day_counter"] = 0
@@ -293,6 +322,8 @@ class App(Tkm.ThemedTKinterFrame):
     def select_tab(self, tab):
         self.notebook.notebook.select(tab)
         if tab == 0:
+            self.screensaver()  # timer of the screensaver
+            self.edit_field = self.user_field
             self.user_field.focus_set()
 
     def tree_selection(self, event):
@@ -398,6 +429,7 @@ class App(Tkm.ThemedTKinterFrame):
 
     def del_released(self, event):
         self.del_flag = False
+        self.screensaver()
 
     def del_pressed(self, event):
         self.del_flag = True
@@ -575,8 +607,7 @@ class App(Tkm.ThemedTKinterFrame):
             reject_reason = data_hex[16:20]
             chain_indicator = data_hex[20:120]
 
-            if len_data > 0:
-                # print(f"Ответ  {binascii.hexlify(data)}", f"{self.count_event_flag}\n")
+            if len_data:
                 if event == b"48":  # Реакция на 48 событие ПОЛУЧЕН ОТЧЕТ ОБ ОШИБКЕ
                     self.port.write(RESP_48)
                 if event == b"21":  # Реакция Hoper on событие
@@ -623,6 +654,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.label_deposit.configure(text=self.count)
 
     def enter_key(self, event):
+        self.screensaver()
         tab = self.current_tab()
         user = self.user_field.get()
         password = self.password_field.get()

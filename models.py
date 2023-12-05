@@ -101,16 +101,17 @@ def add_user(user_status, name, password):
 
 
 def add_users():
-    add_user("Кассир", "1111", "123456")
-    add_user("Инкассатор", "2222", "654321")
+    add_user("Кассир", "1111", "1111")
+    add_user("Инкассатор", "2222", "2222")
     add_user("Кассир", "3333", "123456")
     add_user("Об авторах", "911", "119")
 
 
 def add_clients():
-    add_client("ООО Дионис", "40702810020202020202", "3333")
-    add_client("ООО Солар", "40702810030303030303", "3333")
-
+    add_client("ООО Дионис", "40702810020202020202", "1111")
+    add_client("ООО Солар", "40702810030303030303", "1111")
+    add_client("ИП Иванов", "40802810010203040506", "1111")
+    add_client("ИП Бокарев", "40802810123321098890", "3333")
 
 def add_client(name, account, user_login):
     ent = Clients(name=name, account=account, user_login=user_login)
@@ -122,5 +123,5 @@ def refill_db():
     delete_tables()
     create_tables()
     add_users()
-    from_json_to_db()
+    # from_json_to_db()
     add_clients()
