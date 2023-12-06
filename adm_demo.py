@@ -41,7 +41,8 @@ def restart_program():
 
 
 class App(Tkm.ThemedTKinterFrame):
-    """Demonstration of the deposit machine.Include GUI, authorization and read from com port"""
+    """Demonstration of the deposit machine KDS200. Include GUI, authorization ,
+    read from com port and print function"""
     def __init__(self):
 
         self.data = self.json_read()
@@ -60,6 +61,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.image_qr = None  # qr code image label size
         self.count = 0  # quantity of count notes
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
+        self.clear_denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
         self.count_event_flag = False  # flag of count event
         self.day_status = self.data[0]["day_state"]  # bank day status
         self.receipt_number = int(self.data[0]['receipt_number'])
@@ -67,6 +69,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.adres = "АДМ №213445 121096\nг.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n"
 
         self.printer_name = GetDefaultPrinter()  # "KPOS_58 Printer"
+        self.print_separator = f" \n \n \n \n  {'_' * 23}"
 
         self.user_text = tkinter.StringVar()
         self.password_text = tkinter.StringVar()
@@ -150,11 +153,14 @@ class App(Tkm.ThemedTKinterFrame):
         self.user_field.focus_set()
 
         # Tab2 #
+        butons_kwargs = {"state": "normal"}, {"state": "disable"}
+        if self.data[0]["day_state"]:
+            butons_kwargs = butons_kwargs[::-1]
         frame2 = self.tab2.addFrame("Инкассация")
-        frame2.AccentButton("Открытие\nоперационного дня", self.day_open,
-                            col=0, row=0, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
-        frame2.Button("Закрытие\nоперационного дня", self.day_close,
-                      col=0, row=1, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
+        self.open_button = frame2.AccentButton("Открытие\nоперационного дня", self.day_open, col=0, row=0, colspan=4,
+                            padx=self.screen_pad/2, pady=self.screen_pad/2, widgetkwargs=butons_kwargs[0])
+        self.close_button = frame2.AccentButton("Закрытие\nоперационного дня", self.day_close, col=0, row=1, colspan=4,
+                            padx=self.screen_pad/2, pady=self.screen_pad/2, widgetkwargs=butons_kwargs[1])
         frame2.Button('❮', lambda: self.select_tab(0), col=4, rowspan=2,  style='x.TButton')
 
         # Tab3 #
@@ -214,31 +220,35 @@ class App(Tkm.ThemedTKinterFrame):
         # Tab7 #
         self.frame7 = self.tab7.addFrame("Операционный день открыт")
         self.label7 = self.frame7.Label("Операционный день открыт", size=int(self.screen_pad * 0.8), col=0, row=0,
-                                        colspan=4, pady=0, widgetkwargs={"foreground": self.theme_color})
+                                        colspan=4, pady=0, widgetkwargs={"foreground": self.theme_color,
+                                                                         "justify": "center"})
         self.frame7.Seperator(col=0, row=1, colspan=4)
         self.denom_text1 = tkinter.Text(self.frame7.master, font=("Courier", int(self.screen_pad * 0.23)), border=False)
         self.denom_text1.tag_configure("center", justify='center')
         self.denom_text1.grid(column=0, row=2, columnspan=4, rowspan=4, ipady=0)
         self.frame7.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
 
-        # Tab8
+        # Tab8 #
         frame8 = self.tab8.addFrame("Откройте смену")
         frame_msg = frame8.addLabelFrame("", colspan=4)
-        label8 = frame_msg.Label("Операционный день закрыт.\n Для начала работы откройте\n операционный день.",
-                                 size=int(self.screen_pad * 0.8))
-        label8.configure(foreground=self.theme_color, justify="center")
+        frame_msg.Label("Операционный день закрыт.\n Для начала работы откройте\n операционный день.",
+                        size=int(self.screen_pad * 0.8), widgetkwargs={"foreground": self.theme_color,
+                                                                       "justify": "center"})
         frame8.Button('❮', lambda: self.select_tab(0), col=4, style='x.TButton')
 
-        # Tab9
+        # Tab9 #
         self.image = tkinter.PhotoImage(file="deep.png")
         self.deep_label = ttk.Label(self.tab9.master, image=self.image)
         self.deep_label.grid(row=0, column=0, columnspan=2)
 
+        # Turn on power-board and init validator
         self.engine = Engine()
         self.engine.power_on_0ff(TURN_ON)
         self.port = self.engine.validator_init()
-        self.root.withdraw()
+        # Start screensaver
         self.restart_screensaver()
+        # Delay for better GUI display
+        self.root.withdraw()
         self.root.after(500, self.show)
 
     def show(self):
@@ -261,43 +271,40 @@ class App(Tkm.ThemedTKinterFrame):
     def datetime_now(self, date_format):
         return datetime.now().strftime(date_format)
 
+    def day_status_text(self, widget, denoms_dict, text):
+        """Configure Close/Open bank day page Text widget"""
+        widget.configure(state="normal")
+        widget.delete("0.0", "end")
+        widget.insert("end", f"{self.datetime_now('%Y-%m-%d %H.%M.%S')}\n{self.adres}В сумке:\n", "center")
+        for denom, quantity in denoms_dict:
+            widget.insert("end", f"{denom} руб. - {quantity} шт.\n", "center")
+        widget.insert("end", f"\nИТОГО {str(self.data[0]['day_counter'])} руб.\n{text}", "center")
+        widget.configure(state="disabled")
+
     def day_close(self):
-        if self.day_status:
-            self.day_status = False
-            self.data[0]["day_state"] = self.day_status
-            self.json_write(self.data)
-        self.denom_text.configure(state="normal")
-        self.denom_text.delete("0.0", "end")
-        self.denom_text.insert("end", f"{self.datetime_now('%Y-%m-%d %H.%M.%S')}\n{self.adres}В сумке:\n", "center")
-        for denom, quantity in self.data[1].items():
-            self.denom_text.insert("end", f"{denom} руб. - {quantity} шт.\n", "center")
-        self.denom_text.insert("end", f"\nИТОГО {str(self.data[0]['day_counter'])}"
-                                      f" руб.\nОПЕРАЦИОННЫЙ ДЕНЬ\nЗАКРЫТ", "center")
-        self.denom_text.configure(state="disabled")
-        self.print_text(self.denom_text.get("0.0", "end"))
-        self.print_text(f" \n \n \n \n  {'_' * 23}")
+        self.close_button.configure(state="disable")
+        self.open_button.configure(state="normal")
+        self.day_status = False
+        self.data[0]["day_state"] = self.day_status
+        self.json_write(self.data)
+        self.day_status_text(self.denom_text, self.data[1].items(), "ОПЕРАЦИОННЫЙ ДЕНЬ\nЗАКРЫТ")
+        text = self.denom_text.get("0.0", "end")+self.print_separator
+        self.print_receipt(text, receipt="close day", image=False)
         self.select_tab(5)
 
     def day_open(self):
-        if not self.day_status:
-            self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
-            self.day_status = True
-            self.data[0]["day_counter"] = 0
-            self.data[0]["day_state"] = self.day_status
-            self.data[1] = self.denom_dict
-            self.json_write(self.data)
-
-        self.label7.configure(justify="center")
-        self.denom_text1.configure(state="normal")
-        self.denom_text1.delete("0.0", "end")
-        self.denom_text1.insert("end", f"{self.datetime_now('%Y-%m-%d %H.%M.%S')}"
-                                f"\n{self.adres}В сумке:\n", "center")
-        for denom, quantity in self.denom_dict.items():
-            self.denom_text1.insert("end", f"{denom} руб. - {quantity} шт.\n", "center")
-        self.denom_text1.insert("end", "ОПЕР. ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ", "center")
-        self.denom_text1.configure(state="disabled")
-        self.print_text(self.denom_text1.get("0.0", "end"))
-        self.print_text(f" \n \n \n \n  {'_' * 23}")
+        self.close_button.configure(state="normal")
+        self.open_button.configure(state="disable")
+        self.denom_dict = self.clear_denom_dict
+        self.day_status = True
+        self.data[0]["day_counter"] = 0
+        self.data[0]["day_state"] = self.day_status
+        self.data[0]["receipt_number"] = 0
+        self.data[1] = self.denom_dict
+        self.json_write(self.data)
+        self.day_status_text(self.denom_text1, self.denom_dict.items(), "ОПЕР. ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ")
+        text = self.denom_text1.get("0.0", "end")+self.print_separator
+        self.print_receipt(text, receipt="open day", image=False)
         self.select_tab(6)
 
     def current_tab(self):
@@ -321,32 +328,36 @@ class App(Tkm.ThemedTKinterFrame):
             self.data[1][denom] += self.denom_dict[denom]
         self.json_write(self.data)
 
-    def receipt(self):
+    def receipt_display(self):
+        date = self.datetime_now("%d.%m.%Y\n%H:%M:%S")
         self.label_quantity.configure(text=self.dict_to_text(self.denom_dict)[1])
         self.label_deposit.configure(text=self.count)
-        self.update_counters()
         self.back_button.configure(state="normal")
-        date = self.datetime_now("%Y.%m.%d\n%H:%M:%S")
-        receipt_table = PrettyTable(["Время внесения", "Сумма"], border=False)
+
+        receipt_table = PrettyTable(["Дата/Время", "Сумма"], border=False)
         receipt_table.add_row([date, self.count])
-        receipt_table.add_row(["\n"+self.dict_to_text(self.denom_dict)[0], "\n"+self.dict_to_text(self.denom_dict)[1]])
+        receipt_table.add_row(["\n" + self.dict_to_text(self.denom_dict)[0],
+                               "\n" + self.dict_to_text(self.denom_dict)[1]])
         receipt_table.add_row(["ИТОГО", self.count])
-        receipt_total = f"Чек № {self.receipt_number}\n{self.adres}{self.client}\n{self.account}\n\n{receipt_table}"
-        receipt_qr = f"Чек № {self.receipt_number}\n{self.adres}{self.client}\n{self.account}\n{date}" \
-                     f"\nИТОГО {self.count}"
+        receipt = f"Чек № {self.receipt_number}\n{self.adres}{self.client}\n{self.account}\n\n{receipt_table}"
+        qr_data = f"Чек № {self.receipt_number}\n{self.adres}{self.client}\n{self.account}\n{date}\nИТОГО {self.count}"
+        self.receipt_text.configure(text=receipt, font="Courier", justify="center")
+
+        self.make_qr(qr_data)
+
+        self.image_qr = tkinter.PhotoImage(file="tmpqr.png")
+        self.qr_label.configure(image=self.image_qr)
+        return receipt
+
+    def receipt(self):
+        self.update_counters()
+        receipt = self.receipt_display()
         self.receipt_number += 1
         self.data[0]["receipt_number"] = int(self.data[0]["receipt_number"]) + 1
         self.json_write(self.data)
-        self.receipt_text.configure(text=receipt_total, font="Courier", justify="center")
-        self.make_qr(receipt_qr)
-        self.print_text(receipt_total)
-        self.print_qr("print_qr.png")
-        self.print_text(f" \n \n \n \n  {'_'* 23}")
-        self.image_qr = tkinter.PhotoImage(file="tmpqr.png")
-
-        self.qr_label.configure(image=self.image_qr)
         self.select_tab(4)
-        self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
+        self.print_receipt(receipt, self.print_separator, "print_qr.png", str(self.receipt_number), image=True)
+        self.denom_dict = self.clear_denom_dict
         self.count = 0
 
     def make_qr(self, qr_input):
@@ -355,24 +366,18 @@ class App(Tkm.ThemedTKinterFrame):
         qr.save("tmpqr.png")
         qr_print.save("print_qr.png")
 
-    def print_text(self, print_text):
+    def print_text(self, print_text, h_dc):
         x = 0
         y = 30
         string = print_text.split("\n")
-        h_dc = win32ui_CreateDC()
-        h_dc.CreatePrinterDC(self.printer_name)
-        h_dc.StartDoc("Printing...")
         h_dc.StartPage()
         for line in string:
             h_dc.TextOut(x, y, line)
             y += 30
         h_dc.EndPage()
-        h_dc.EndDoc()
 
-    def print_qr(self, file_name):
+    def print_qr(self, file_name, h_dc):
 
-        h_dc = win32ui_CreateDC()
-        h_dc.CreatePrinterDC(self.printer_name)
         printable_area = h_dc.GetDeviceCaps(HORZRES), h_dc.GetDeviceCaps(VERTRES)
         printer_size = h_dc.GetDeviceCaps(PHYSICALWIDTH), h_dc.GetDeviceCaps(PHYSICALHEIGHT)
         printer_margins = h_dc.GetDeviceCaps(PHYSICALOFFSETX), h_dc.GetDeviceCaps(PHYSICALOFFSETY)
@@ -383,10 +388,7 @@ class App(Tkm.ThemedTKinterFrame):
 
         ratios = [1.0 * printable_area[0] / bmp.size[0], 1.0 * printable_area[1] / bmp.size[1]]
         scale = min(ratios)
-
-        h_dc.StartDoc(file_name)
         h_dc.StartPage()
-
         dib = ImageWin.Dib(bmp)
         scaled_width, scaled_height = [int(scale * i) for i in bmp.size]
         x1 = int((printer_size[0] - scaled_width) / 2)
@@ -394,8 +396,16 @@ class App(Tkm.ThemedTKinterFrame):
         x2 = x1 + scaled_width
         y2 = y1 + scaled_height
         dib.draw(h_dc.GetHandleOutput(), (x1, y1, x2, y2))
-
         h_dc.EndPage()
+
+    def print_receipt(self, text1, text2="", file_path="", receipt="", image=False):
+        h_dc = win32ui_CreateDC()
+        h_dc.CreatePrinterDC(self.printer_name)
+        h_dc.StartDoc(f"Printing receipt {receipt}")
+        self.print_text(text1, h_dc)
+        if image:
+            self.print_qr(file_path, h_dc)
+            self.print_text(text2, h_dc)
         h_dc.EndDoc()
         h_dc.DeleteDC()
 
@@ -442,45 +452,46 @@ class App(Tkm.ThemedTKinterFrame):
         self.password_field.configure(show="")
         self.root.after(500, self.hide_pass)
 
+    def verify_db_user(self, user, input_pass):
+        user_dict = user.to_dict()
+        if user_dict["status"] == "Кассир":
+            password_hash = user_dict["password"]
+            if pwd_context.verify(input_pass, password_hash):
+                self.set_default_entry()
+                if self.day_status:
+                    for i in self.tree.get_children():
+                        self.tree.delete(i)
+                    for data in user.client:
+                        tree_row = data.to_dict()
+                        self.tree.insert('', 'end', text=tree_row["name"], values=tree_row["purpose"])
+                    self.select_tab(3)
+                    self.tree.selection_add(self.tree.get_children()[0])
+                else:
+                    self.select_tab(7)
+            else:
+                self.flashing()
+
+        elif user_dict["status"] == "Инкассатор":
+            password_hash = user_dict["password"]
+            if pwd_context.verify(input_pass, password_hash):
+                self.set_default_entry()
+                self.select_tab(1)
+            else:
+                self.flashing()
+
+        elif user_dict["status"] == "Об авторах":
+            password_hash = user_dict["password"]
+            if pwd_context.verify(input_pass, password_hash):
+                self.easter_egg(input_pass)
+            else:
+                self.flashing()
+
     def authorization(self):
         input_user = self.user_field.get()
         input_pass = self.password_field.get()
-        # Work with db
         user = get_user(input_user)
         if user:
-            user_dict = user.to_dict()
-            if user_dict["status"] == "Кассир":
-                password_hash = user_dict["password"]
-                if pwd_context.verify(input_pass, password_hash):
-                    self.set_default_entry()
-                    if self.day_status:
-                        for i in self.tree.get_children():
-                            self.tree.delete(i)
-                        for data in user.client:
-                            tree_row = data.to_dict()
-                            self.tree.insert('', 'end',  text=tree_row["name"], values=tree_row["purpose"])
-                        self.select_tab(3)
-                        self.tree.selection_add(self.tree.get_children()[0])
-                    else:
-                        self.select_tab(7)
-                else:
-                    self.flashing()
-
-            elif user_dict["status"] == "Инкассатор":
-                password_hash = user_dict["password"]
-                if pwd_context.verify(input_pass, password_hash):
-                    self.set_default_entry()
-                    self.select_tab(1)
-                else:
-                    self.flashing()
-
-            elif user_dict["status"] == "Об авторах":
-                password_hash = user_dict["password"]
-                if pwd_context.verify(input_pass, password_hash):
-                    self.easter_egg(input_pass)
-                else:
-                    self.flashing()
-
+            self.verify_db_user(user, input_pass)
         elif input_user == "3" and input_pass == "3":
             self.change_theme("azure", "light")
         elif input_user == "4" and input_pass == "4":
@@ -606,19 +617,19 @@ class App(Tkm.ThemedTKinterFrame):
                         self.state_butons_config("normal", "disable")
                     else:
                         self.state_butons_config("disable", "normal")
-                if event == b"28":  # Реакция Banknotes don't Exist Reject событие
+                if event == b"28":  # Reaction to Banknotes don't Exist Reject event
                     self.port.write(RESP_REJ_OFF)
-                if event == b"27":  # Реакция на Banknotes Exist on Reject событие
+                if event == b"27":  # Reaction to Banknotes Exist on Reject event
                     self.port.write(RESP_REJ_ON)
-                if event == b"41":  # Реакция Send SC initialize Status & Result событие ПРИНЯТ ОТЧЁТ О СБРОСЕ ОШИБОК
+                if event == b"41":  # Reaction to Send SC initialize Status & Result event ERROR RESET REPORT ACCEPTED
                     self.port.write(RESP_B5)
-                if event == b"24":  # Реакция Send Counting Result событие (данные просчета)
+                if event == b"24":  # Reaction to Send Counting Result event (calculation data)
                     self.port.write(RESP_24)
-                if event == b"45":  # Реакция Deposit Ready Status событие
+                if event == b"45":  # Reaction to Deposit Ready Status event
                     self.port.write(RESP_45)
 
                 if len_data == 64 and event == b"23" and error_hex == b"00":  # if count event and there is no error
-                    self.event_23(denom_byte)
+                    self.count_event(denom_byte)
                 if event == b"23" and chain_indicator == b'00' * 50:
                     self.engine.write_logs("a+", "Insert chain detected")
 
@@ -629,7 +640,7 @@ class App(Tkm.ThemedTKinterFrame):
 
             threading_Timer(0.06, self.read_data_from_port).start()
 
-    def event_23(self, denom_byte):
+    def count_event(self, denom_byte):
         nominal = unpack("<h", denom_byte)  # little-endian
         self.denom_dict[str(nominal[0])] += 1
         self.count += nominal[0]
