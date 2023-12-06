@@ -1,4 +1,4 @@
-python -m nuitka --standalone --follow-imports --windows-icon-from-ico=adm.ico --disable-console --enable-plugin=tk-inter --include-module=TKinterModernThemes adm_demo.py 
+python -m nuitka --standalone --follow-imports --windows-icon-from-ico=adm.ico --enable-plugin=tk-inter --include-module=TKinterModernThemes --disable-console adm_demo.py
 
 __init__.py
 64    theme_path = os.path.abspath(os.path.join(__file__ ,"..\\themes"))

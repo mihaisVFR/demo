@@ -7,7 +7,6 @@ import TKinterModernThemes as Tkm
 from qrcode import make as qrcode_make
 import tkinter
 from prettytable import PrettyTable
-from PIL import ImageTk
 from PIL import Image as Pic
 from PIL import ImageWin
 from win32print import GetDefaultPrinter
@@ -19,7 +18,6 @@ from engine import *
 from constants import *
 from struct import unpack
 from load import *
-# from screensaver import Screensaver
 from multiprocessing import Process, freeze_support
 
 
@@ -43,6 +41,7 @@ def restart_program():
 
 
 class App(Tkm.ThemedTKinterFrame):
+    """Demonstration of the deposit machine.Include GUI, authorization and read from com port"""
     def __init__(self):
 
         self.data = self.json_read()
@@ -55,20 +54,25 @@ class App(Tkm.ThemedTKinterFrame):
         self.root.bind("<Return>", self.enter_key)
         self.root.iconbitmap(default='adm.ico')
         self.timer = None  # timer of screensaver
-        self.client = ""
-        self.account = ""
-        self.img = None # qr code image
-        self.count = 0
+        self.client = ""  # user data
+        self.account = ""  # user account
+        self.img = None  # qr code image print size
+        self.image_qr = None  # qr code image label size
+        self.count = 0  # quantity of count notes
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
-        self.count_event_flag = False
-        self.day_status = self.data[0]["day_state"]
+        self.count_event_flag = False  # flag of count event
+        self.day_status = self.data[0]["day_state"]  # bank day status
         self.receipt_number = int(self.data[0]['receipt_number'])
-        self.del_flag = True
+        self.del_flag = True  # if button pressed backspace foo repeat
+        self.adres = "АДМ №213445 121096\nг.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n"
+
         self.printer_name = GetDefaultPrinter()  # "KPOS_58 Printer"
 
         self.user_text = tkinter.StringVar()
         self.password_text = tkinter.StringVar()
+        self.screen_pad = self.root.winfo_screenwidth() * 0.05
 
+        # set foreground for switch color themes
         if self.theme == "azure" or self.theme == "sun-valley":
             self.theme_color = '#57c8ff'
         else:
@@ -79,20 +83,16 @@ class App(Tkm.ThemedTKinterFrame):
         else:
             self.theme_foreground = "white"
 
-        self.adres = "АДМ №213445 121096\nг.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n"
-        self.label = None
-        self.screen_pad = self.root.winfo_screenwidth() * 0.05
-
         # Global styles
         self.style = ttk.Style()
         self.style.configure('TButton', font=("Arial", int(self.screen_pad*0.9), "bold"), justify='center')
         self.style.configure('eye.TButton', font=("Arial", int(self.screen_pad * 0.7), "bold"), justify='center')
         self.style.configure('park.TButton', font=("Arial", int(self.screen_pad * 0.5), "bold"), justify='center'
-                             , foreground="red")
+                             , foreground="red", width=1)
         self.style.map('park.TButton', foreground=[('disabled', '#706f6f')])
         self.style.configure('accept.TButton', font=("Arial", int(self.screen_pad * 0.9), "bold"), justify='center',
                              foreground="red")
-        self.style.configure('x.TButton', font=("Arial", int(self.screen_pad*0.5), "bold"), foreground="red")
+        self.style.configure('x.TButton', font=("Arial", int(self.screen_pad*0.5), "bold"), foreground="red", width=1)
         self.style.configure('Treeview', font=("Arial", int(self.screen_pad*0.55)), rowheight=75)
         self.style.configure('Treeview.Heading', font=("Arial", 40))
         self.style.map('Treeview', background=[('selected', self.theme_color)], foreground=[('selected', 'black')])
@@ -113,128 +113,113 @@ class App(Tkm.ThemedTKinterFrame):
         self.tab8 = self.notebook.addTab("Ошибка опер. день")
         self.tab9 = self.notebook.addTab("ScreenSaver")
 
-        # Tab1
+        # Tab1 #
         self.frame1 = self.tab1.addFrame("-")
         self.frame1.Label("ЛОГИН", int(self.screen_pad * 0.7), "bold", col=0, row=0)
         self.frame1.Label("ПАРОЛЬ", int(self.screen_pad * 0.7), "bold", col=0, row=1)
-
-        self.user_field = self.frame1.Entry(textvariable=self.user_text, col=1, row=0)
-        self.user_field.bind("<1>", self.set_user_entry)  # <FocusIn>
-        self.edit_field = self.user_field
-        self.password_field = self.frame1.Entry(textvariable=self.password_text, col=1, row=1)
+        entry_kwargs = {"font": ("Arial", int(self.screen_pad * 0.7), "bold"), "width": 7}
+        self.user_field = self.frame1.Entry(textvariable=self.user_text, col=1, row=0, widgetkwargs=entry_kwargs)
+        self.user_field.bind("<1>", self.set_user_entry)
+        self.edit_field = self.user_field  # first insert user
+        entry_kwargs["show"] = "✳"         # hide password
+        self.password_field = self.frame1.Entry(textvariable=self.password_text,
+                                                col=1, row=1, widgetkwargs=entry_kwargs)
         self.password_field.bind("<1>", self.set_password_entry)
 
-        self.user_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"), width=7)
-        self.password_field.configure(font=("Arial", int(self.screen_pad * 0.7), "bold"), width=7, show="✳")
+        # create digit buttons
+        btn_kwargs = {"takefocus": 0}
+        grid_kwargs = ((1, 5), (0, 2), (1, 2), (2, 2), (0, 3), (1, 3), (2, 3), (0, 4), (1, 4), (2, 4))
+        for i in range(10):
+            self.frame1.Button(str(i), command=lambda digit=i: self.digit_buttons(digit),
+                               col=grid_kwargs[i][0], row=grid_kwargs[i][1], widgetkwargs=btn_kwargs)
 
-        widgetkwargs = {"takefocus": 0}
-        self.button1 = self.frame1.Button("1", lambda: self.digit_buttons("1"), col=0, row=2, widgetkwargs=widgetkwargs)
-        self.button2 = self.frame1.Button("2", lambda: self.digit_buttons("2"), col=1, row=2, widgetkwargs=widgetkwargs)
-        self.button3 = self.frame1.Button("3", lambda: self.digit_buttons("3"), col=2, row=2, widgetkwargs=widgetkwargs)
-        self.button4 = self.frame1.Button("4", lambda: self.digit_buttons("4"), col=0, row=3, widgetkwargs=widgetkwargs)
-        self.button5 = self.frame1.Button("5", lambda: self.digit_buttons("5"), col=1, row=3, widgetkwargs=widgetkwargs)
-        self.button6 = self.frame1.Button("6", lambda: self.digit_buttons("6"), col=2, row=3, widgetkwargs=widgetkwargs)
-        self.button7 = self.frame1.Button("7", lambda: self.digit_buttons("7"), col=0, row=4, widgetkwargs=widgetkwargs)
-        self.button8 = self.frame1.Button("8", lambda: self.digit_buttons("8"), col=1, row=4, widgetkwargs=widgetkwargs)
-        self.button9 = self.frame1.Button("9", lambda: self.digit_buttons("9"), col=2, row=4, widgetkwargs=widgetkwargs)
-        self.button0 = self.frame1.Button("0", lambda: self.digit_buttons("0"), col=1, row=5, widgetkwargs=widgetkwargs)
-        self.enter = self.frame1.AccentButton("ВВОД", lambda: self.enter_key(1), col=2, row=5, widgetkwargs=widgetkwargs)
-        eye_button = self.frame1.Button("👁", self.show_pass, col=2, row=1, sticky="w")
-        eye_button.configure(style="eye.TButton", width=2, takefocus=0)
-        for wiget in self.frame1.widgets:
-            if "Button" in str(wiget):
-                wiget.widget.bind("<ButtonPress>", self.screensaver)
+        self.enter = self.frame1.AccentButton("ВВОД", lambda: self.enter_key(1), col=2, row=5, widgetkwargs=btn_kwargs)
+        self.frame1.Button("👁", self.show_pass, col=2, row=1, sticky="w",
+                           style="eye.TButton", widgetkwargs={"width": 2, "takefocus": 0})
+
+        # bind events for restart screensaver timer
+        for widget in self.frame1.widgets:
+            if "Button" in str(widget):
+                widget.widget.bind("<ButtonPress>", self.restart_screensaver)
         for key in range(10):
-            self.root.bind(f"<KeyRelease-{key}>", self.screensaver)
+            self.root.bind(f"<KeyRelease-{key}>", self.restart_screensaver)
 
-        self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5, widgetkwargs=widgetkwargs)
+        self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5)
         self.button_del.bind("<ButtonRelease>", self.del_released)
         self.button_del.bind("<ButtonPress>", self.del_pressed)
         self.user_field.focus_set()
 
-        # Tab2
+        # Tab2 #
         frame2 = self.tab2.addFrame("Инкассация")
         frame2.AccentButton("Открытие\nоперационного дня", self.day_open,
                             col=0, row=0, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
         frame2.Button("Закрытие\nоперационного дня", self.day_close,
                       col=0, row=1, colspan=4, padx=self.screen_pad/2, pady=self.screen_pad/2)
-        back = frame2.Button('❮', lambda: self.select_tab(0), col=4, rowspan=2,  style='x.TButton')
-        back.configure(width=1)
+        frame2.Button('❮', lambda: self.select_tab(0), col=4, rowspan=2,  style='x.TButton')
 
-        # Tab3
+        # Tab3 #
         frame3 = self.tab3.addFrame("Внесение")
         deposit_frame = frame3.addLabelFrame("", col=0, row=2,)
         denom_frame = frame3.addLabelFrame("", col=0, row=0, rowspan=2)
         button_frame = frame3.addFrame(name="", col=2, row=1, rowspan=2)
-        self.label_denoms = denom_frame.Label(text=self.dict_to_text(self.denom_dict)[0], col=0)
-        self.label_quantity = denom_frame.Label(text=self.dict_to_text(self.denom_dict)[1], col=1)
-        self.label_deposit = deposit_frame.Label(text=self.count, col=0, row=1)
-        self.label_deposit.configure(font=("Arial", int(self.screen_pad), "bold"), justify="center")
+        self.label_denoms = denom_frame.Label(self.dict_to_text(self.denom_dict)[0], int(self.screen_pad*0.45),
+                                              "bold", col=0, widgetkwargs={"width": 12, "justify": "right",
+                                                                           "foreground": self.theme_color})
+        self.label_quantity = denom_frame.Label(self.dict_to_text(self.denom_dict)[1], int(self.screen_pad * 0.45),
+                                                "bold", col=1, widgetkwargs={"width": 12, "justify": "right"})
+        self.label_deposit = deposit_frame.Label(self.count, int(self.screen_pad), "bold",
+                                                 col=0, row=1, widgetkwargs={"justify": "center"})
 
-        self.label_denoms.configure(font=("Arial", int(self.screen_pad*0.45), "bold"), width=12, justify="right",
-                                    foreground=self.theme_color)
-        self.label_quantity.configure(font=("Arial", int(self.screen_pad * 0.45), "bold"), width=12, justify="left")
+        frame3.Label("Внесите банкноты.\nМаксимальное\nколичество-\n200 банкнот", int(self.screen_pad*0.6), "bold",
+                     col=2, row=0, widgetkwargs={"justify": "center", "foreground": self.theme_color})
 
-        label_down = frame3.Label("Внесите банкноты.\nМаксимальное\nколличество-\n200 банкнот", col=2, row=0)
-        label_down.configure(font=("Arial", int(self.screen_pad*0.6), "bold"),
-                             foreground=self.theme_color, justify="center")
+        # theme widget options
         if self.theme == "park" and self.mode == "dark":
             self.done = button_frame.AccentButton('Зачислить', self.receipt)
-            self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style="")
-            self.back_button.configure(width=1, style="park.TButton")
+            self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style="park.TButton")
         else:
             self.done = button_frame.Button('Зачислить', self.receipt)
             self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style='x.TButton')
-            self.back_button.configure(width=1)
 
-        # Tab4
+        # Tab4 #
         self.frame4 = self.tab4.addFrame("Выбор счета")
-        label_up = self.frame4.Label("Выберете счет для зачисления", col=0, row=0, colspan=7)
-        label_up.configure(font=("Arial", int(self.screen_pad * 0.8), "bold"), foreground=self.theme_color)
-        self.tree_data = self.frame4.Treeview(['Контрагент', 'Счет'], [110, 140], 3, [{"name": "", "purpose": ""}],
-                                              'subfiles', ['name', 'purpose'], col=0, row=1, colspan=7, rowspan=7)
-        self.tree_data.configure(style="Treeview")
-        self.tree_data.bind("<<TreeviewSelect>>", self.tree_selection)
-        back = self.frame4.Button('❮', lambda: self.select_tab(0), col=7, rowspan=9, style='x.TButton')
-        back.configure(width=1)
+        self.frame4.Label("Выберете счет для зачисления", int(self.screen_pad * 0.8), "bold",  col=0, row=0, colspan=7,
+                          widgetkwargs={"foreground": self.theme_color})
+        self.tree = self.frame4.Treeview(['Контрагент', 'Счет'], [110, 140], 3, [{"name": "", "purpose": ""}],
+                                         'subfiles', ['name', 'purpose'], col=0, row=1, colspan=7, rowspan=7,
+                                         widgetkwargs={"style": "Treeview"})
+        self.tree.bind("<<TreeviewSelect>>", self.tree_selection)
+        self.frame4.Button('❮', lambda: self.select_tab(0), col=7, rowspan=9, style='x.TButton')
         self.accept_button = self.frame4.Button(text="Выбрать", col=0, row=8, colspan=7, command=self.deposit_start)
 
-        # Tab5
+        # Tab5 #
         self.frame5 = self.tab5.addFrame("Заберите чек")
         self.frame5.Label(text="", col=0, padx=self.screen_pad)
-        self.qr_label = ttk.Label(self.frame5.master)
+        self.qr_label = ttk.Label(self.frame5.master, image=self.image_qr)
         self.qr_label.grid(row=1, column=3, columnspan=2)
-        self.label5 = self.frame5.Label("Заберите чек", col=1, row=0, colspan=4)
-        self.label5.configure(font=("Arial", int(self.screen_pad * 0.8)))
+        self.label5 = self.frame5.Label("Заберите чек", int(self.screen_pad * 0.8), col=1, row=0, colspan=4)
         self.receipt_text = self.frame5.Text("", col=1, row=1, colspan=2, sticky="n")
-        back = self.frame5.Button('❮', lambda: self.select_tab(0), col=9, style='x.TButton', rowspan=7)
-        back.configure(width=1)
+        self.frame5.Button('❮', lambda: self.select_tab(0), col=9, style='x.TButton', rowspan=7)
 
-        # Tab6
+        # Tab6 #
         self.frame6 = self.tab6.addFrame("Операционный день закрыт")
         self.label6 = self.frame6.Label("Операционный день закрыт", size=int(self.screen_pad * 0.8), col=0,
-                                        row=0, colspan=4)
-        self.label6.configure(foreground=self.theme_color)
+                                        row=0, colspan=4, widgetkwargs={"foreground": self.theme_color})
         self.frame6.Seperator(col=0, row=1, colspan=4)
-        self.denom_text = tkinter.Text(self.frame6.master, font=("Courier", int(self.screen_pad*0.23)),
-                                       border=False)
+        self.denom_text = tkinter.Text(self.frame6.master, font=("Courier", int(self.screen_pad*0.23)), border=False)
         self.denom_text.tag_configure("center", justify='center')
         self.denom_text.grid(column=0, row=2, columnspan=4, rowspan=4, sticky="n", ipady=0)
-        back = self.frame6.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
-        back.configure(width=1)
+        self.frame6.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
 
-        # Tab7
+        # Tab7 #
         self.frame7 = self.tab7.addFrame("Операционный день открыт")
         self.label7 = self.frame7.Label("Операционный день открыт", size=int(self.screen_pad * 0.8), col=0, row=0,
-                                        colspan=4, pady=0)
-        self.label7.configure(foreground=self.theme_color)
+                                        colspan=4, pady=0, widgetkwargs={"foreground": self.theme_color})
         self.frame7.Seperator(col=0, row=1, colspan=4)
-        self.denom_text1 = tkinter.Text(self.frame7.master, font=("Courier", int(self.screen_pad * 0.23)),
-                                        border=False)
+        self.denom_text1 = tkinter.Text(self.frame7.master, font=("Courier", int(self.screen_pad * 0.23)), border=False)
         self.denom_text1.tag_configure("center", justify='center')
         self.denom_text1.grid(column=0, row=2, columnspan=4, rowspan=4, ipady=0)
-        back = self.frame7.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
-        back.configure(width=1)
+        self.frame7.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
 
         # Tab8
         frame8 = self.tab8.addFrame("Откройте смену")
@@ -242,8 +227,7 @@ class App(Tkm.ThemedTKinterFrame):
         label8 = frame_msg.Label("Операционный день закрыт.\n Для начала работы откройте\n операционный день.",
                                  size=int(self.screen_pad * 0.8))
         label8.configure(foreground=self.theme_color, justify="center")
-        back = frame8.Button('❮', lambda: self.select_tab(0), col=4, style='x.TButton')
-        back.configure(width=1)
+        frame8.Button('❮', lambda: self.select_tab(0), col=4, style='x.TButton')
 
         # Tab9
         self.image = tkinter.PhotoImage(file="deep.png")
@@ -254,7 +238,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.engine.power_on_0ff(TURN_ON)
         self.port = self.engine.validator_init()
         self.root.withdraw()
-        self.screensaver()
+        self.restart_screensaver()
         self.root.after(500, self.show)
 
     def show(self):
@@ -269,10 +253,10 @@ class App(Tkm.ThemedTKinterFrame):
         self.select_tab(0)
         self.root.unbind("<1>")
 
-    def screensaver(self, event=None):
+    def restart_screensaver(self, event=None):
         if self.timer is not None:
             self.root.after_cancel(self.timer)
-        self.timer = self.root.after(300000, self.screensaver_start)
+        self.timer = self.root.after(150000, self.screensaver_start)
 
     def datetime_now(self, date_format):
         return datetime.now().strftime(date_format)
@@ -322,12 +306,12 @@ class App(Tkm.ThemedTKinterFrame):
     def select_tab(self, tab):
         self.notebook.notebook.select(tab)
         if tab == 0:
-            self.screensaver()  # timer of the screensaver
+            self.restart_screensaver()  # restart timer of the screensaver
             self.edit_field = self.user_field
             self.user_field.focus_set()
 
     def tree_selection(self, event):
-        item = self.tree_data.item(self.tree_data.selection())
+        item = self.tree.item(self.tree.selection())
         self.client = item["text"]
         self.account = item["values"][0]
 
@@ -358,9 +342,9 @@ class App(Tkm.ThemedTKinterFrame):
         self.print_text(receipt_total)
         self.print_qr("print_qr.png")
         self.print_text(f" \n \n \n \n  {'_'* 23}")
-        photo = Pic.open("tmpqr.png")
-        img = ImageTk.PhotoImage(photo)
-        self.qr_label.configure(image=img)
+        self.image_qr = tkinter.PhotoImage(file="tmpqr.png")
+
+        self.qr_label.configure(image=self.image_qr)
         self.select_tab(4)
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
         self.count = 0
@@ -429,7 +413,7 @@ class App(Tkm.ThemedTKinterFrame):
 
     def del_released(self, event):
         self.del_flag = False
-        self.screensaver()
+        self.restart_screensaver()
 
     def del_pressed(self, event):
         self.del_flag = True
@@ -470,13 +454,13 @@ class App(Tkm.ThemedTKinterFrame):
                 if pwd_context.verify(input_pass, password_hash):
                     self.set_default_entry()
                     if self.day_status:
-                        for i in self.tree_data.get_children():
-                            self.tree_data.delete(i)
+                        for i in self.tree.get_children():
+                            self.tree.delete(i)
                         for data in user.client:
                             tree_row = data.to_dict()
-                            self.tree_data.insert('', 'end',  text=tree_row["name"], values=tree_row["purpose"])
+                            self.tree.insert('', 'end',  text=tree_row["name"], values=tree_row["purpose"])
                         self.select_tab(3)
-                        self.tree_data.selection_add(self.tree_data.get_children()[0])
+                        self.tree.selection_add(self.tree.get_children()[0])
                     else:
                         self.select_tab(7)
                 else:
@@ -641,7 +625,7 @@ class App(Tkm.ThemedTKinterFrame):
                 if error_hex in REJECT_GROUP.keys() and reject_reason != b"0000" and event != b'24':
                     for error_text, error_code in RECO_ERROR.items():
                         if reject_reason == error_code:
-                            self.engine.write_logs("a+", error_text)
+                            self.engine.write_logs("a+", f"reject reason: {error_text}")
 
             threading_Timer(0.06, self.read_data_from_port).start()
 
@@ -654,7 +638,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.label_deposit.configure(text=self.count)
 
     def enter_key(self, event):
-        self.screensaver()
+        self.restart_screensaver()
         tab = self.current_tab()
         user = self.user_field.get()
         password = self.password_field.get()
