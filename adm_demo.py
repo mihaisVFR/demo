@@ -363,13 +363,10 @@ class App(Tkm.ThemedTKinterFrame):
         self.select_tab(6)
 
     def update_counters(self):
-        print(self.denom_dict)
-        print(self.data[1])
         self.receipt_number += 1
         self.data[0]["day_counter"] += self.count
         self.data[0]["receipt_number"] = self.receipt_number
         for denom in self.data[1].keys():
-            print(f"{self.data[1][denom]}+{self.denom_dict[denom]}={self.data[1][denom] + self.denom_dict[denom]}")
             self.data[1][denom] += self.denom_dict[denom]
         self.json_write(self.data)
         self.denom_dict = self.drop_dict(self.denom_dict)
