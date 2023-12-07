@@ -1,5 +1,4 @@
-from sys import exit as sys_exit
-from sys import executable as sys_executable
+import sys
 from subprocess import call
 from json import load, dump
 from threading import Timer as threading_Timer
@@ -30,9 +29,10 @@ def decrypt(file, password):
 
 def restart_program():
     # restart the current program
-    python = sys_executable
+    python = sys.executable
     call([python, __file__])
-    sys_exit()
+    time.sleep(1)
+    sys.exit()
 
 
 def loading():
@@ -41,7 +41,7 @@ def loading():
 
 class App(Tkm.ThemedTKinterFrame):
     """Demonstration of the deposit machine KDS200. Include GUI, authorization ,
-    read from com port and print function"""
+    read from com port"""
     def __init__(self):
 
         self.data = self.json_read()
@@ -65,9 +65,6 @@ class App(Tkm.ThemedTKinterFrame):
         self.receipt_number = int(self.data[0]['receipt_number'])
         self.del_flag = True  # if button pressed backspace foo repeat
         self.adres = "АДМ №213445 121096\nг.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n"
-
-        # self.printer_name = GetDefaultPrinter()  # "KPOS_58 Printer"
-        # self.print_separator = f" \n \n \n \n  {'_' * 23}"
 
         self.user_text = tkinter.StringVar()
         self.password_text = tkinter.StringVar()
@@ -595,7 +592,7 @@ class App(Tkm.ThemedTKinterFrame):
         if tab == 3:
             self.deposit_start()
 
-    # auxiliary methods #
+    # Auxiliary methods #
     def json_read(self):
         with open("variables.json", "r", encoding="utf-8") as f:
             all_variables = load(f)

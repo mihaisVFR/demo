@@ -5,6 +5,7 @@ class Load:
     def __init__(self):
         root = Tk()
         root.title("loading")
+        root.iconbitmap(default='adm.ico')
         x = root.winfo_screenwidth()
         y = root.winfo_screenheight()
         root.geometry(f"{x}x{y}+0+0")
