@@ -20,7 +20,7 @@ from struct import unpack
 from load import *
 from multiprocessing import Process, freeze_support
 
-
+omm =1
 def crypt(file, password):
     buffer_size = 256 * 512
     encryptFile(str(file), str(file) + ".crp", password, buffer_size)
@@ -61,7 +61,6 @@ class App(Tkm.ThemedTKinterFrame):
         self.image_qr = None  # qr code image label size
         self.count = 0  # quantity of count notes
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
-        self.clear_denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
         self.count_event_flag = False  # flag of count event
         self.day_status = self.data[0]["day_state"]  # bank day status
         self.receipt_number = int(self.data[0]['receipt_number'])
@@ -90,8 +89,8 @@ class App(Tkm.ThemedTKinterFrame):
         self.style = ttk.Style()
         self.style.configure('TButton', font=("Arial", int(self.screen_pad*0.9), "bold"), justify='center')
         self.style.configure('eye.TButton', font=("Arial", int(self.screen_pad * 0.7), "bold"), justify='center')
-        self.style.configure('park.TButton', font=("Arial", int(self.screen_pad * 0.5), "bold"), justify='center'
-                             , foreground="red", width=1)
+        self.style.configure('park.TButton', font=("Arial", int(self.screen_pad * 0.5), "bold"), justify='center',
+                             foreground="red", width=1)
         self.style.map('park.TButton', foreground=[('disabled', '#706f6f')])
         self.style.configure('accept.TButton', font=("Arial", int(self.screen_pad * 0.9), "bold"), justify='center',
                              foreground="red")
@@ -153,14 +152,14 @@ class App(Tkm.ThemedTKinterFrame):
         self.user_field.focus_set()
 
         # Tab2 #
-        butons_kwargs = {"state": "normal"}, {"state": "disable"}
+        kwargs = {"state": "normal"}, {"state": "disable"}
         if self.data[0]["day_state"]:
-            butons_kwargs = butons_kwargs[::-1]
+            kwargs = kwargs[::-1]
         frame2 = self.tab2.addFrame("Инкассация")
         self.open_button = frame2.AccentButton("Открытие\nоперационного дня", self.day_open, col=0, row=0, colspan=4,
-                            padx=self.screen_pad/2, pady=self.screen_pad/2, widgetkwargs=butons_kwargs[0])
+                                               padx=self.screen_pad/2, pady=self.screen_pad/2, widgetkwargs=kwargs[0])
         self.close_button = frame2.AccentButton("Закрытие\nоперационного дня", self.day_close, col=0, row=1, colspan=4,
-                            padx=self.screen_pad/2, pady=self.screen_pad/2, widgetkwargs=butons_kwargs[1])
+                                                padx=self.screen_pad/2, pady=self.screen_pad/2, widgetkwargs=kwargs[1])
         frame2.Button('❮', lambda: self.select_tab(0), col=4, rowspan=2,  style='x.TButton')
 
         # Tab3 #
@@ -203,7 +202,8 @@ class App(Tkm.ThemedTKinterFrame):
         self.frame5.Label(text="", col=0, padx=self.screen_pad)
         self.qr_label = ttk.Label(self.frame5.master, image=self.image_qr)
         self.qr_label.grid(row=1, column=3, columnspan=2)
-        self.label5 = self.frame5.Label("Заберите чек", int(self.screen_pad * 0.8), col=1, row=0, colspan=4)
+        self.label5 = self.frame5.Label("Заберите чек", int(self.screen_pad * 0.8), col=1, row=0, colspan=4,
+                                        widgetkwargs={"foreground": self.theme_color})
         self.receipt_text = self.frame5.Text("", col=1, row=1, colspan=2, sticky="n")
         self.frame5.Button('❮', lambda: self.select_tab(0), col=9, style='x.TButton', rowspan=7)
 
@@ -212,7 +212,8 @@ class App(Tkm.ThemedTKinterFrame):
         self.label6 = self.frame6.Label("Операционный день закрыт", size=int(self.screen_pad * 0.8), col=0,
                                         row=0, colspan=4, widgetkwargs={"foreground": self.theme_color})
         self.frame6.Seperator(col=0, row=1, colspan=4)
-        self.denom_text = tkinter.Text(self.frame6.master, font=("Courier", int(self.screen_pad*0.23)), border=False)
+        self.denom_text = tkinter.Text(self.frame6.master, font=("Courier", int(self.screen_pad*0.23), "bold"),
+                                       border=False)
         self.denom_text.tag_configure("center", justify='center')
         self.denom_text.grid(column=0, row=2, columnspan=4, rowspan=4, sticky="n", ipady=0)
         self.frame6.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
@@ -223,7 +224,8 @@ class App(Tkm.ThemedTKinterFrame):
                                         colspan=4, pady=0, widgetkwargs={"foreground": self.theme_color,
                                                                          "justify": "center"})
         self.frame7.Seperator(col=0, row=1, colspan=4)
-        self.denom_text1 = tkinter.Text(self.frame7.master, font=("Courier", int(self.screen_pad * 0.23)), border=False)
+        self.denom_text1 = tkinter.Text(self.frame7.master, font=("Courier", int(self.screen_pad * 0.23), "bold"),
+                                        border=False)
         self.denom_text1.tag_configure("center", justify='center')
         self.denom_text1.grid(column=0, row=2, columnspan=4, rowspan=4, ipady=0)
         self.frame7.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
@@ -295,11 +297,11 @@ class App(Tkm.ThemedTKinterFrame):
     def day_open(self):
         self.close_button.configure(state="normal")
         self.open_button.configure(state="disable")
-        self.denom_dict = self.clear_denom_dict
+        self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
         self.day_status = True
         self.data[0]["day_counter"] = 0
         self.data[0]["day_state"] = self.day_status
-        self.data[0]["receipt_number"] = 0
+        self.data[0]["receipt_number"] = 1
         self.data[1] = self.denom_dict
         self.json_write(self.data)
         self.day_status_text(self.denom_text1, self.denom_dict.items(), "ОПЕР. ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ")
@@ -323,45 +325,44 @@ class App(Tkm.ThemedTKinterFrame):
         self.account = item["values"][0]
 
     def update_counters(self):
+        self.receipt_number += 1
         self.data[0]["day_counter"] += self.count
+        self.data[0]["receipt_number"] = int(self.data[0]["receipt_number"]) + 1
         for denom in self.data[1].keys():
             self.data[1][denom] += self.denom_dict[denom]
         self.json_write(self.data)
+        self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
+        self.count = 0
 
-    def receipt_display(self):
+    def receipt_data(self):
         date = self.datetime_now("%d.%m.%Y\n%H:%M:%S")
-        self.label_quantity.configure(text=self.dict_to_text(self.denom_dict)[1])
-        self.label_deposit.configure(text=self.count)
-        self.back_button.configure(state="normal")
-
         receipt_table = PrettyTable(["Дата/Время", "Сумма"], border=False)
         receipt_table.add_row([date, self.count])
         receipt_table.add_row(["\n" + self.dict_to_text(self.denom_dict)[0],
                                "\n" + self.dict_to_text(self.denom_dict)[1]])
         receipt_table.add_row(["ИТОГО", self.count])
-        receipt = f"Чек № {self.receipt_number}\n{self.adres}{self.client}\n{self.account}\n\n{receipt_table}"
+        receipt_total = f"Чек № {self.receipt_number}\n{self.adres}{self.client}\n{self.account}\n\n{receipt_table}"
         qr_data = f"Чек № {self.receipt_number}\n{self.adres}{self.client}\n{self.account}\n{date}\nИТОГО {self.count}"
-        self.receipt_text.configure(text=receipt, font="Courier", justify="center")
-
         self.make_qr(qr_data)
+        return receipt_total
 
+    def receipt_display(self, receipt_total):
+        self.label_quantity.configure(text=self.dict_to_text(self.denom_dict)[1])
+        self.label_deposit.configure(text=self.count)
+        self.back_button.configure(state="normal")
+        self.receipt_text.configure(text=receipt_total, font="Courier", justify="center")
         self.image_qr = tkinter.PhotoImage(file="tmpqr.png")
         self.qr_label.configure(image=self.image_qr)
-        return receipt
 
     def receipt(self):
+        receipt_data = self.receipt_data()
         self.update_counters()
-        receipt = self.receipt_display()
-        self.receipt_number += 1
-        self.data[0]["receipt_number"] = int(self.data[0]["receipt_number"]) + 1
-        self.json_write(self.data)
+        self.receipt_display(receipt_data)
         self.select_tab(4)
-        self.print_receipt(receipt, self.print_separator, "print_qr.png", str(self.receipt_number), image=True)
-        self.denom_dict = self.clear_denom_dict
-        self.count = 0
+        self.print_receipt(receipt_data, self.print_separator, "print_qr.png", str(self.receipt_number), image=True)
 
     def make_qr(self, qr_input):
-        qr = qrcode_make(qr_input, box_size=3)
+        qr = qrcode_make(qr_input, box_size=7)
         qr_print = qrcode_make(qr_input, box_size=1)
         qr.save("tmpqr.png")
         qr_print.save("print_qr.png")
@@ -380,7 +381,7 @@ class App(Tkm.ThemedTKinterFrame):
 
         printable_area = h_dc.GetDeviceCaps(HORZRES), h_dc.GetDeviceCaps(VERTRES)
         printer_size = h_dc.GetDeviceCaps(PHYSICALWIDTH), h_dc.GetDeviceCaps(PHYSICALHEIGHT)
-        printer_margins = h_dc.GetDeviceCaps(PHYSICALOFFSETX), h_dc.GetDeviceCaps(PHYSICALOFFSETY)
+        # printer_margins = h_dc.GetDeviceCaps(PHYSICALOFFSETX), h_dc.GetDeviceCaps(PHYSICALOFFSETY)
 
         bmp = Pic.open(file_name)
         if bmp.size[0] > bmp.size[1]:
@@ -529,15 +530,6 @@ class App(Tkm.ThemedTKinterFrame):
             self.edit_field.delete("0", "end")
             self.edit_field.insert("end", digit)
 
-    def day_state(self, status):
-        all_variables = self.json_read()
-        if not status:
-            all_variables[0]["day_state"] = False
-            all_variables[0]["receipt_number"] = 1
-        else:
-            all_variables[0]["day_state"] = True
-        self.json_write(all_variables)
-
     def json_read(self):
         with open("variables.json", "r", encoding="utf-8") as f:
             all_variables = load(f)
@@ -579,7 +571,7 @@ class App(Tkm.ThemedTKinterFrame):
             self.accept_button.configure(style="accept.TButton")
             self.root.after(300, lambda: self.accept_button.configure(style="TButton"))
 
-    def start(self):
+    def start_count(self):
         self.engine.send_to_port(CMD_B1)
         self.engine.send_to_port(CMD_B2)
 
@@ -607,7 +599,7 @@ class App(Tkm.ThemedTKinterFrame):
                     self.port.write(RESP_48)
                 if event == b"21":  # Реакция Hoper on событие
                     self.count_event_flag = True
-                    self.start()
+                    self.start_count()
                     self.state_butons_config("disable", "disable")
                     self.port.write(RESP_HOP_ON)
                 if event == b"22":  # Реакция Hoper off событие
