@@ -258,6 +258,8 @@ class App(Tkm.ThemedTKinterFrame):
         self.root.withdraw()
         self.root.after(500, self.show)
 
+    # GUI functions #
+
     def show(self):
         self.root.deiconify()
 
@@ -275,8 +277,53 @@ class App(Tkm.ThemedTKinterFrame):
             self.root.after_cancel(self.timer)
         self.timer = self.root.after(150000, self.screensaver_start)
 
-    def datetime_now(self, date_format):
-        return datetime.now().strftime(date_format)
+    def current_tab(self):
+        return self.notebook.notebook.tabs().index(self.notebook.notebook.select())
+
+    def select_tab(self, tab):
+        self.notebook.notebook.select(tab)
+        if tab == 0:
+            self.restart_screensaver()  # restart timer of the screensaver
+            self.edit_field = self.user_field
+            self.user_field.focus_set()
+
+    def tree_selection(self, event):
+        item = self.tree.item(self.tree.selection())
+        self.client = item["text"]
+        self.account = item["values"][0]
+
+    def change_theme(self, theme, mode):
+        self.port_close()
+        self.data[2]["theme"] = theme
+        self.data[2]["mode"] = mode
+        self.json_write(self.data)
+        self.handleExit()
+        restart_program()
+
+    def flashing(self):
+        self.flash("red")
+        self.root.after(300, lambda: self.flash(self.theme_foreground))
+
+    def flash(self, color):
+        self.user_field.config(foreground=color)
+        self.password_field.config(foreground=color)
+
+    def hide_pass(self):
+        self.password_field.configure(show="✳")
+
+    def show_pass(self):
+        self.password_field.configure(show="")
+        self.root.after(500, self.hide_pass)
+
+    def set_default_entry(self):
+        self.user_field.delete(0, "end")
+        self.password_field.delete(0, "end")
+
+    def state_butons_config(self, state_done, state_back):
+        self.done.configure(state=state_done)
+        self.back_button.configure(state=state_back)
+
+    # Functions of the main logic of the program (with configure widgets after events) #
 
     def day_status_text(self, widget, denoms_dict, text):
         """Configure Close/Open bank day page Text widget"""
@@ -315,33 +362,18 @@ class App(Tkm.ThemedTKinterFrame):
         print_receipt(text, receipt="open day", image=False)
         self.select_tab(6)
 
-    def current_tab(self):
-        return self.notebook.notebook.tabs().index(self.notebook.notebook.select())
-
-    def select_tab(self, tab):
-        self.notebook.notebook.select(tab)
-        if tab == 0:
-            self.restart_screensaver()  # restart timer of the screensaver
-            self.edit_field = self.user_field
-            self.user_field.focus_set()
-
-    def tree_selection(self, event):
-        item = self.tree.item(self.tree.selection())
-        self.client = item["text"]
-        self.account = item["values"][0]
-
     def update_counters(self):
+        print(self.denom_dict)
+        print(self.data[1])
         self.receipt_number += 1
         self.data[0]["day_counter"] += self.count
         self.data[0]["receipt_number"] = self.receipt_number
         for denom in self.data[1].keys():
+            print(f"{self.data[1][denom]}+{self.denom_dict[denom]}={self.data[1][denom] + self.denom_dict[denom]}")
             self.data[1][denom] += self.denom_dict[denom]
         self.json_write(self.data)
         self.denom_dict = self.drop_dict(self.denom_dict)
         self.count = 0
-
-    def drop_dict(self, dct):
-        return dct.fromkeys(("5", "10", "50", "100", "200", "500", "1000", "2000", "5000"), 0)
 
     def receipt_data(self):
         date = self.datetime_now("%d.%m.%Y\n%H:%M:%S")
@@ -365,53 +397,52 @@ class App(Tkm.ThemedTKinterFrame):
 
     def receipt(self):
         receipt_data = self.receipt_data()
-        self.receipt_display(receipt_data)
         self.update_counters()
+        self.receipt_display(receipt_data)
         self.select_tab(4)
         print_receipt(receipt_data, "print_qr.png", str(self.receipt_number), image=True)
 
-    def set_user_entry(self, event):
-        self.edit_field = self.user_field
+    def easter_egg(self, password):
+        if os.path.isfile("ficha.png.crp"):
+            decrypt("ficha.png.crp", password)
+        self.img = tkinter.PhotoImage(file="ficha.png")
+        window = tkinter.Toplevel(borderwidth=20)  # Создаём всплывающее окно
+        window.title("О создателях")
+        window.grab_set()
+        top_level_label = ttk.Label(window, image=self.img)
+        top_level_label.grid(column=0, row=0)
+        close_buttton = ttk.Button(window, text="ЗАКРЫТЬ", command=lambda: window.destroy())
+        close_buttton.grid(column=0)
+        crypt("ficha.png", password)
 
-    def set_password_entry(self, event):
-        self.edit_field = self.password_field
-
-    def backspace(self):
-        if self.del_flag:
-            text = self.edit_field.get()
-            self.edit_field.delete(len(text)-1)
-            self.root.after(100,  self.backspace)
-
-    def del_released(self, event):
-        self.del_flag = False
-        self.restart_screensaver()
-
-    def del_pressed(self, event):
-        self.del_flag = True
-        self.backspace()
-
-    def set_default_entry(self):
-        self.user_field.delete(0, "end")
-        self.password_field.delete(0, "end")
-
-    def port_close(self):
-        if self.port.is_open:
+    # Authorization methods #
+    def authorization(self):
+        input_user = self.user_field.get()
+        input_pass = self.password_field.get()
+        user = get_user(input_user)
+        if user:
+            self.verify_db_user(user, input_pass)
+        elif input_user == "3" and input_pass == "3":
+            self.change_theme("azure", "light")
+        elif input_user == "4" and input_pass == "4":
+            self.change_theme("park", "light")
+        elif input_user == "5" and input_pass == "5":
+            self.change_theme("park", "dark")
+        elif input_user == "6" and input_pass == "6":
+            self.change_theme("sun-valley", "dark")
+        elif input_user == "31" and input_pass == "31":
+            self.engine.power_on_0ff(TURN_OFF)
+        elif input_user == "32" and input_pass == "32":
+            self.engine.power_on_0ff(TURN_ON)
+            self.engine.validator_init()
+        elif input_user == "55" and input_pass == "55":
+            self.engine.send_to_port(CMD_B5)
+            self.root.after(100, lambda: self.engine.send_to_port(RESP_B5))
+        elif input_user == "03" and input_pass == "03":
             self.port.close()
-
-    def change_theme(self, theme, mode):
-        self.port_close()
-        self.data[2]["theme"] = theme
-        self.data[2]["mode"] = mode
-        self.json_write(self.data)
-        self.handleExit()
-        restart_program()
-
-    def hide_pass(self):
-        self.password_field.configure(show="✳")
-
-    def show_pass(self):
-        self.password_field.configure(show="")
-        self.root.after(500, self.hide_pass)
+            self.handleExit()
+        else:
+            self.flashing()
 
     def verify_db_user(self, user, input_pass):
         user_dict = user.to_dict()
@@ -447,79 +478,7 @@ class App(Tkm.ThemedTKinterFrame):
             else:
                 self.flashing()
 
-    def authorization(self):
-        input_user = self.user_field.get()
-        input_pass = self.password_field.get()
-        user = get_user(input_user)
-        if user:
-            self.verify_db_user(user, input_pass)
-        elif input_user == "3" and input_pass == "3":
-            self.change_theme("azure", "light")
-        elif input_user == "4" and input_pass == "4":
-            self.change_theme("park", "light")
-        elif input_user == "5" and input_pass == "5":
-            self.change_theme("park", "dark")
-        elif input_user == "6" and input_pass == "6":
-            self.change_theme("sun-valley", "dark")
-        elif input_user == "31" and input_pass == "31":
-            self.engine.power_on_0ff(TURN_OFF)
-        elif input_user == "32" and input_pass == "32":
-            self.engine.power_on_0ff(TURN_ON)
-            self.engine.validator_init()
-        elif input_user == "55" and input_pass == "55":
-            self.engine.send_to_port(CMD_B5)
-            self.root.after(100, lambda: self.engine.send_to_port(RESP_B5))
-        elif input_user == "03" and input_pass == "03":
-            self.port.close()
-            self.handleExit()
-        else:
-            self.flashing()
-
-    def flashing(self):
-        self.flash("red")
-        self.root.after(300, lambda: self.flash(self.theme_foreground))
-
-    def flash(self, color):
-        self.user_field.config(foreground=color)
-        self.password_field.config(foreground=color)
-
-    def digit_buttons(self, digit):
-        if self.edit_field.get().isdigit() or self.edit_field.get() == "":
-            self.edit_field.insert("end", digit)
-        else:
-            self.edit_field.delete("0", "end")
-            self.edit_field.insert("end", digit)
-
-    def json_read(self):
-        with open("variables.json", "r", encoding="utf-8") as f:
-            all_variables = load(f)
-            return all_variables
-
-    def json_write(self, data):
-        with open("variables.json", "w", encoding="utf-8") as f:
-            dump(data, f)
-
-    def easter_egg(self, password):
-        if os.path.isfile("ficha.png.crp"):
-            decrypt("ficha.png.crp", password)
-        self.img = tkinter.PhotoImage(file="ficha.png")
-        window = tkinter.Toplevel(borderwidth=20)  # Создаём всплывающее окно
-        window.title("О создателях")
-        window.grab_set()
-        top_level_label = ttk.Label(window, image=self.img)
-        top_level_label.grid(column=0, row=0)
-        close_buttton = ttk.Button(window, text="ЗАКРЫТЬ", command=lambda: window.destroy())
-        close_buttton.grid(column=0)
-        crypt("ficha.png", password)
-
-    def dict_to_text(self, dct):
-        text_values = ""
-        text_keys = ""
-        for key, value in dct.items():
-            text_values += f"{value} шт.\n"
-            text_keys += f"{key} руб.\n"
-        return text_keys, text_values
-
+    # Count methods #
     def deposit_start(self):
         self.count = 0
         self.state_butons_config("disable", "normal")
@@ -535,9 +494,9 @@ class App(Tkm.ThemedTKinterFrame):
         self.engine.send_to_port(CMD_B1)
         self.engine.send_to_port(CMD_B2)
 
-    def state_butons_config(self, state_done, state_back):
-        self.done.configure(state=state_done)
-        self.back_button.configure(state=state_back)
+    def port_close(self):
+        if self.port.is_open:
+            self.port.close()
 
     def read_data_from_port(self):
         if self.current_tab() == 2:
@@ -555,14 +514,14 @@ class App(Tkm.ThemedTKinterFrame):
             chain_indicator = data_hex[20:120]
 
             if len_data:
-                if event == b"48":  # Реакция на 48 событие ПОЛУЧЕН ОТЧЕТ ОБ ОШИБКЕ
+                if event == b"48":  # Reaction to 48 event ERROR REPORT ACCEPTED
                     self.port.write(RESP_48)
-                if event == b"21":  # Реакция Hoper on событие
+                if event == b"21":  # Reaction to Hoper on event
                     self.count_event_flag = True
                     self.start_count()
                     self.state_butons_config("disable", "disable")
                     self.port.write(RESP_HOP_ON)
-                if event == b"22":  # Реакция Hoper off событие
+                if event == b"22":  # Reaction to Hoper off event
                     self.port.write(RESP_HOP_OFF)
                     self.count_event_flag = False
                     if self.count != 0:
@@ -600,6 +559,34 @@ class App(Tkm.ThemedTKinterFrame):
         self.label_quantity.configure(text=self.dict_to_text(self.denom_dict)[1])
         self.label_deposit.configure(text=self.count)
 
+    # User interface methods #
+    def set_user_entry(self, event):
+        self.edit_field = self.user_field
+
+    def set_password_entry(self, event):
+        self.edit_field = self.password_field
+
+    def backspace(self):
+        if self.del_flag:
+            text = self.edit_field.get()
+            self.edit_field.delete(len(text)-1)
+            self.root.after(100,  self.backspace)
+
+    def digit_buttons(self, digit):
+        if self.edit_field.get().isdigit() or self.edit_field.get() == "":
+            self.edit_field.insert("end", digit)
+        else:
+            self.edit_field.delete("0", "end")
+            self.edit_field.insert("end", digit)
+
+    def del_released(self, event):
+        self.del_flag = False
+        self.restart_screensaver()
+
+    def del_pressed(self, event):
+        self.del_flag = True
+        self.backspace()
+
     def enter_key(self, event):
         self.restart_screensaver()
         tab = self.current_tab()
@@ -616,6 +603,30 @@ class App(Tkm.ThemedTKinterFrame):
                 self.user_field.focus_set()
         if tab == 3:
             self.deposit_start()
+
+    # auxiliary methods #
+    def json_read(self):
+        with open("variables.json", "r", encoding="utf-8") as f:
+            all_variables = load(f)
+            return all_variables
+
+    def json_write(self, data):
+        with open("variables.json", "w", encoding="utf-8") as f:
+            dump(data, f)
+
+    def dict_to_text(self, dct):
+        text_values = ""
+        text_keys = ""
+        for key, value in dct.items():
+            text_values += f"{value} шт.\n"
+            text_keys += f"{key} руб.\n"
+        return text_keys, text_values
+
+    def datetime_now(self, date_format):
+        return datetime.now().strftime(date_format)
+
+    def drop_dict(self, dct):
+        return dct.fromkeys(("5", "10", "50", "100", "200", "500", "1000", "2000", "5000"), 0)
 
 
 if __name__ == '__main__':
