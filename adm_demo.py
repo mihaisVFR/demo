@@ -4,23 +4,24 @@ from subprocess import call
 from json import load, dump
 from threading import Timer as threading_Timer
 import TKinterModernThemes as Tkm
-from qrcode import make as qrcode_make
+# from qrcode import make as qrcode_make
 import tkinter
 from prettytable import PrettyTable
-from PIL import Image as Pic
-from PIL import ImageWin
-from win32print import GetDefaultPrinter
-from win32ui import CreateDC as win32ui_CreateDC
+# from PIL import Image as Pic
+# from PIL import ImageWin
+# from win32print import GetDefaultPrinter
+# from win32ui import CreateDC as win32ui_CreateDC
 from models import get_user
 from passlib.apps import custom_app_context as pwd_context
 from pyAesCrypt import encryptFile, decryptFile
 from engine import *
-from constants import *
+# from constants import *
 from struct import unpack
 from load import *
 from multiprocessing import Process, freeze_support
+from printer import *
 
-omm =1
+
 def crypt(file, password):
     buffer_size = 256 * 512
     encryptFile(str(file), str(file) + ".crp", password, buffer_size)
@@ -38,6 +39,10 @@ def restart_program():
     python = sys_executable
     call([python, __file__])
     sys_exit()
+
+
+def loading():
+    Load()
 
 
 class App(Tkm.ThemedTKinterFrame):
@@ -67,8 +72,8 @@ class App(Tkm.ThemedTKinterFrame):
         self.del_flag = True  # if button pressed backspace foo repeat
         self.adres = "АДМ №213445 121096\nг.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n"
 
-        self.printer_name = GetDefaultPrinter()  # "KPOS_58 Printer"
-        self.print_separator = f" \n \n \n \n  {'_' * 23}"
+        # self.printer_name = GetDefaultPrinter()  # "KPOS_58 Printer"
+        # self.print_separator = f" \n \n \n \n  {'_' * 23}"
 
         self.user_text = tkinter.StringVar()
         self.password_text = tkinter.StringVar()
@@ -146,7 +151,7 @@ class App(Tkm.ThemedTKinterFrame):
         for key in range(10):
             self.root.bind(f"<KeyRelease-{key}>", self.restart_screensaver)
 
-        self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5)
+        self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5, widgetkwargs=btn_kwargs)
         self.button_del.bind("<ButtonRelease>", self.del_released)
         self.button_del.bind("<ButtonPress>", self.del_pressed)
         self.user_field.focus_set()
@@ -290,23 +295,24 @@ class App(Tkm.ThemedTKinterFrame):
         self.data[0]["day_state"] = self.day_status
         self.json_write(self.data)
         self.day_status_text(self.denom_text, self.data[1].items(), "ОПЕРАЦИОННЫЙ ДЕНЬ\nЗАКРЫТ")
-        text = self.denom_text.get("0.0", "end")+self.print_separator
-        self.print_receipt(text, receipt="close day", image=False)
+        text = self.denom_text.get("0.0", "end")
+        print_receipt(text, receipt="close day", image=False)
         self.select_tab(5)
 
     def day_open(self):
         self.close_button.configure(state="normal")
         self.open_button.configure(state="disable")
-        self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
+        self.denom_dict = self.drop_dict(self.denom_dict)
         self.day_status = True
+        self.receipt_number = 1
         self.data[0]["day_counter"] = 0
         self.data[0]["day_state"] = self.day_status
-        self.data[0]["receipt_number"] = 1
-        self.data[1] = self.denom_dict
+        self.data[0]["receipt_number"] = self.receipt_number
+        self.data[1] = self.drop_dict(self.data[1])
         self.json_write(self.data)
         self.day_status_text(self.denom_text1, self.denom_dict.items(), "ОПЕР. ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ")
-        text = self.denom_text1.get("0.0", "end")+self.print_separator
-        self.print_receipt(text, receipt="open day", image=False)
+        text = self.denom_text1.get("0.0", "end")
+        print_receipt(text, receipt="open day", image=False)
         self.select_tab(6)
 
     def current_tab(self):
@@ -327,12 +333,15 @@ class App(Tkm.ThemedTKinterFrame):
     def update_counters(self):
         self.receipt_number += 1
         self.data[0]["day_counter"] += self.count
-        self.data[0]["receipt_number"] = int(self.data[0]["receipt_number"]) + 1
+        self.data[0]["receipt_number"] = self.receipt_number
         for denom in self.data[1].keys():
             self.data[1][denom] += self.denom_dict[denom]
         self.json_write(self.data)
-        self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
+        self.denom_dict = self.drop_dict(self.denom_dict)
         self.count = 0
+
+    def drop_dict(self, dct):
+        return dct.fromkeys(("5", "10", "50", "100", "200", "500", "1000", "2000", "5000"), 0)
 
     def receipt_data(self):
         date = self.datetime_now("%d.%m.%Y\n%H:%M:%S")
@@ -343,7 +352,7 @@ class App(Tkm.ThemedTKinterFrame):
         receipt_table.add_row(["ИТОГО", self.count])
         receipt_total = f"Чек № {self.receipt_number}\n{self.adres}{self.client}\n{self.account}\n\n{receipt_table}"
         qr_data = f"Чек № {self.receipt_number}\n{self.adres}{self.client}\n{self.account}\n{date}\nИТОГО {self.count}"
-        self.make_qr(qr_data)
+        make_qr(qr_data)
         return receipt_total
 
     def receipt_display(self, receipt_total):
@@ -356,59 +365,10 @@ class App(Tkm.ThemedTKinterFrame):
 
     def receipt(self):
         receipt_data = self.receipt_data()
-        self.update_counters()
         self.receipt_display(receipt_data)
+        self.update_counters()
         self.select_tab(4)
-        self.print_receipt(receipt_data, self.print_separator, "print_qr.png", str(self.receipt_number), image=True)
-
-    def make_qr(self, qr_input):
-        qr = qrcode_make(qr_input, box_size=7)
-        qr_print = qrcode_make(qr_input, box_size=1)
-        qr.save("tmpqr.png")
-        qr_print.save("print_qr.png")
-
-    def print_text(self, print_text, h_dc):
-        x = 0
-        y = 30
-        string = print_text.split("\n")
-        h_dc.StartPage()
-        for line in string:
-            h_dc.TextOut(x, y, line)
-            y += 30
-        h_dc.EndPage()
-
-    def print_qr(self, file_name, h_dc):
-
-        printable_area = h_dc.GetDeviceCaps(HORZRES), h_dc.GetDeviceCaps(VERTRES)
-        printer_size = h_dc.GetDeviceCaps(PHYSICALWIDTH), h_dc.GetDeviceCaps(PHYSICALHEIGHT)
-        # printer_margins = h_dc.GetDeviceCaps(PHYSICALOFFSETX), h_dc.GetDeviceCaps(PHYSICALOFFSETY)
-
-        bmp = Pic.open(file_name)
-        if bmp.size[0] > bmp.size[1]:
-            bmp = bmp.rotate(90)
-
-        ratios = [1.0 * printable_area[0] / bmp.size[0], 1.0 * printable_area[1] / bmp.size[1]]
-        scale = min(ratios)
-        h_dc.StartPage()
-        dib = ImageWin.Dib(bmp)
-        scaled_width, scaled_height = [int(scale * i) for i in bmp.size]
-        x1 = int((printer_size[0] - scaled_width) / 2)
-        y1 = int((printer_size[1] - scaled_height) / 2)
-        x2 = x1 + scaled_width
-        y2 = y1 + scaled_height
-        dib.draw(h_dc.GetHandleOutput(), (x1, y1, x2, y2))
-        h_dc.EndPage()
-
-    def print_receipt(self, text1, text2="", file_path="", receipt="", image=False):
-        h_dc = win32ui_CreateDC()
-        h_dc.CreatePrinterDC(self.printer_name)
-        h_dc.StartDoc(f"Printing receipt {receipt}")
-        self.print_text(text1, h_dc)
-        if image:
-            self.print_qr(file_path, h_dc)
-            self.print_text(text2, h_dc)
-        h_dc.EndDoc()
-        h_dc.DeleteDC()
+        print_receipt(receipt_data, "print_qr.png", str(self.receipt_number), image=True)
 
     def set_user_entry(self, event):
         self.edit_field = self.user_field
@@ -656,10 +616,6 @@ class App(Tkm.ThemedTKinterFrame):
                 self.user_field.focus_set()
         if tab == 3:
             self.deposit_start()
-
-
-def loading():
-    Load()
 
 
 if __name__ == '__main__':
