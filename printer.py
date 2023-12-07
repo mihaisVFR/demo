@@ -52,10 +52,9 @@ def print_receipt(text, file_path="", receipt="", image=False):
     h_dc = win32ui_CreateDC()
     h_dc.CreatePrinterDC(GetDefaultPrinter())  # "KPOS_58 Printer"
     h_dc.StartDoc(f"Printing receipt {receipt}")
-    total_text = text+separator
-    print_text(total_text, h_dc)
+    print_text(text, h_dc)
     if image:
         print_qr(file_path, h_dc)
-        print_text(separator, h_dc)
+    print_text(separator, h_dc)
     h_dc.EndDoc()
     h_dc.DeleteDC()

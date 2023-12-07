@@ -4,18 +4,12 @@ from subprocess import call
 from json import load, dump
 from threading import Timer as threading_Timer
 import TKinterModernThemes as Tkm
-# from qrcode import make as qrcode_make
 import tkinter
 from prettytable import PrettyTable
-# from PIL import Image as Pic
-# from PIL import ImageWin
-# from win32print import GetDefaultPrinter
-# from win32ui import CreateDC as win32ui_CreateDC
 from models import get_user
 from passlib.apps import custom_app_context as pwd_context
 from pyAesCrypt import encryptFile, decryptFile
 from engine import *
-# from constants import *
 from struct import unpack
 from load import *
 from multiprocessing import Process, freeze_support
