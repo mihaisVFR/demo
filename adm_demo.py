@@ -49,8 +49,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.mode = self.data[2]["mode"]
         Tkm.firstWindow = True  # when change theme must be root window
 
-        super().__init__("ADM_show", self.theme, self.mode, useconfigfile=False)  # azure / sun-valley / park
-
+        super().__init__("ADM_show", self.theme, self.mode, useconfigfile=False)  # azure / sun-valley / park)
         self.root.bind("<Return>", self.enter_key)
         self.root.iconbitmap(default='adm.ico')
         self.timer = None  # timer of screensaver
@@ -84,7 +83,7 @@ class App(Tkm.ThemedTKinterFrame):
         # Global styles
         self.style = ttk.Style()
         self.style.configure('TButton', font=("Arial", int(self.screen_pad*0.9), "bold"), justify='center')
-        self.style.configure('eye.TButton', font=("Arial", int(self.screen_pad * 0.7), "bold"), justify='center')
+        self.style.configure('eye.TButton', font=("Webdings", int(self.screen_pad)), justify='center', )
         self.style.configure('park.TButton', font=("Arial", int(self.screen_pad * 0.5), "bold"), justify='center',
                              foreground="red", width=1)
         self.style.map('park.TButton', foreground=[('disabled', '#706f6f')])
@@ -113,15 +112,20 @@ class App(Tkm.ThemedTKinterFrame):
 
         # Tab1 #
         self.frame1 = self.tab1.addFrame("-")
-        self.frame1.Label("ЛОГИН", int(self.screen_pad * 0.7), "bold", col=0, row=0)
-        self.frame1.Label("ПАРОЛЬ", int(self.screen_pad * 0.7), "bold", col=0, row=1)
-        entry_kwargs = {"font": ("Arial", int(self.screen_pad * 0.7), "bold"), "width": 7}
-        self.user_field = self.frame1.Entry(textvariable=self.user_text, col=1, row=0, widgetkwargs=entry_kwargs)
+        self.frame1.Label("ЛОГИН", int(self.screen_pad * 0.8), "bold", col=0, row=0, padx=0)
+        self.frame1.Label("ПАРОЛЬ", int(self.screen_pad * 0.8), "bold", col=0, row=1, padx=0)
+        entry_kwargs = {"font": ("helvetica", int(self.screen_pad * 0.8), "bold"), "width": 7}
+
+        self.user_field = self.frame1.Entry(textvariable=self.user_text, col=1, row=0, widgetkwargs=entry_kwargs,
+                                            validate="key", validatecommand=self.validate_entry,
+                                            validatecommandmode='%P', invalidcommand=lambda e: ...)
         self.user_field.bind("<1>", self.set_user_entry)
         self.edit_field = self.user_field  # first insert user
-        entry_kwargs["show"] = "✳"         # hide password
-        self.password_field = self.frame1.Entry(textvariable=self.password_text,
-                                                col=1, row=1, widgetkwargs=entry_kwargs)
+        entry_kwargs["show"] = "✱"         # hide password ✳
+        self.password_field = self.frame1.Entry(textvariable=self.password_text, col=1, row=1,
+                                                widgetkwargs=entry_kwargs, validate="key",
+                                                validatecommand=self.validate_entry,
+                                                validatecommandmode='%P', invalidcommand=lambda e: ...)
         self.password_field.bind("<1>", self.set_password_entry)
 
         # create digit buttons
@@ -131,9 +135,10 @@ class App(Tkm.ThemedTKinterFrame):
             self.frame1.Button(str(i), command=lambda digit=i: self.digit_buttons(digit),
                                col=grid_kwargs[i][0], row=grid_kwargs[i][1], widgetkwargs=btn_kwargs)
 
-        self.enter = self.frame1.AccentButton("ВВОД", lambda: self.enter_key(1), col=2, row=5, widgetkwargs=btn_kwargs)
-        self.frame1.Button("👁", self.show_pass, col=2, row=1, sticky="w",
-                           style="eye.TButton", widgetkwargs={"width": 2, "takefocus": 0})
+        self.enter = self.frame1.AccentButton("ВВОД", lambda: self.enter_key(1), col=2, row=5, widgetkwargs={
+                                                                                            "takefocus": 0, "width": 6})
+        self.frame1.Button("N", self.show_pass, col=2, row=1, sticky="w",
+                           style="eye.TButton", widgetkwargs={"width": 1, "takefocus": 0, "padding": 0})
 
         # bind events for restart screensaver timer
         for widget in self.frame1.widgets:
@@ -548,6 +553,12 @@ class App(Tkm.ThemedTKinterFrame):
         self.label_deposit.configure(text=self.count)
 
     # User interface methods #
+    def validate_entry(self, value):
+        if len(value) == 0 or len(value) <= 5 and value.isdigit():  # 10 characters
+            return True
+        else:
+            return False
+
     def set_user_entry(self, event):
         self.edit_field = self.user_field
 
@@ -558,7 +569,7 @@ class App(Tkm.ThemedTKinterFrame):
         if self.del_flag:
             text = self.edit_field.get()
             self.edit_field.delete(len(text)-1)
-            self.root.after(100,  self.backspace)
+            self.root.after(200,  self.backspace)
 
     def digit_buttons(self, digit):
         if self.edit_field.get().isdigit() or self.edit_field.get() == "":
