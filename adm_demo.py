@@ -554,7 +554,7 @@ class App(Tkm.ThemedTKinterFrame):
 
     # User interface methods #
     def validate_entry(self, value):
-        if len(value) == 0 or len(value) <= 5 and value.isdigit():  # 10 characters
+        if len(value) == 0 or len(value) <= 5 and value.isdigit():
             return True
         else:
             return False
