@@ -7,7 +7,7 @@ from qrcode import make as qrcode_make
 
 
 def make_qr(qr_data):
-    qr = qrcode_make(qr_data, box_size=7)
+    qr = qrcode_make(qr_data, box_size=5)
     qr_print = qrcode_make(qr_data, box_size=1)
     qr.save("tmpqr.png")
     qr_print.save("print_qr.png")

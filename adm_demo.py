@@ -82,14 +82,14 @@ class App(Tkm.ThemedTKinterFrame):
 
         # Global styles
         self.style = ttk.Style()
-        self.style.configure('TButton', font=("Arial", int(self.screen_pad*0.9), "bold"), justify='center')
+        self.style.configure('TButton', font=("Arial", int(self.screen_pad * 0.88), "bold"), justify='center')
         self.style.configure('eye.TButton', font=("Webdings", int(self.screen_pad)), justify='center', )
         self.style.configure('park.TButton', font=("Arial", int(self.screen_pad * 0.5), "bold"), justify='center',
                              foreground="red", width=1)
         self.style.map('park.TButton', foreground=[('disabled', '#706f6f')])
         self.style.configure('accept.TButton', font=("Arial", int(self.screen_pad * 0.9), "bold"), justify='center',
                              foreground="red")
-        self.style.configure('x.TButton', font=("Arial", int(self.screen_pad*0.5), "bold"), foreground="red", width=1)
+        self.style.configure('x.TButton', font=("Arial", int(self.screen_pad*0.5), "bold"), foreground="red", width=2)
         self.style.configure('Treeview', font=("Arial", int(self.screen_pad*0.55)), rowheight=75)
         self.style.configure('Treeview.Heading', font=("Arial", 40))
         self.style.map('Treeview', background=[('selected', self.theme_color)], foreground=[('selected', 'black')])
@@ -97,6 +97,7 @@ class App(Tkm.ThemedTKinterFrame):
         if self.mode == "light":
             self.style.configure('TFrame', borderwidth=3, relief='ridge')  # flat,groove,raised,ridge,solid,or sunken
         self.style.layout('TNotebook.Tab', [])  # disable tabs layout
+        ttk.Button()
 
         # Notes
         self.notebook = self.Notebook("Notebook Test")
@@ -150,7 +151,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.button_del = self.frame1.AccentButton("УДАЛ", command=lambda: ..., col=0, row=5, widgetkwargs=btn_kwargs)
         self.button_del.bind("<ButtonRelease>", self.del_released)
         self.button_del.bind("<ButtonPress>", self.del_pressed)
-        self.user_field.focus_set()
+
 
         # Tab2 #
         kwargs = {"state": "normal"}, {"state": "disable"}
@@ -161,15 +162,15 @@ class App(Tkm.ThemedTKinterFrame):
                                                padx=self.screen_pad/2, pady=self.screen_pad/2, widgetkwargs=kwargs[0])
         self.close_button = frame2.AccentButton("Закрытие\nоперационного дня", self.day_close, col=0, row=1, colspan=4,
                                                 padx=self.screen_pad/2, pady=self.screen_pad/2, widgetkwargs=kwargs[1])
-        frame2.Button('❮', lambda: self.select_tab(0), col=4, rowspan=2,  style='x.TButton')
+        frame2.Button("\n".join("НАЗАД"), lambda: self.select_tab(0), col=4, rowspan=2,  style='x.TButton')
 
         # Tab3 #
         frame3 = self.tab3.addFrame("Внесение")
-        deposit_frame = frame3.addLabelFrame("", col=0, row=2,)
-        denom_frame = frame3.addLabelFrame("", col=0, row=0, rowspan=2)
+        deposit_frame = frame3.addLabelFrame("", col=0,pady=0, row=2,)
+        denom_frame = frame3.addLabelFrame("", col=0, row=0,pady=0, rowspan=2)
         button_frame = frame3.addFrame(name="", col=2, row=1, rowspan=2)
         self.label_denoms = denom_frame.Label(self.dict_to_text(self.denom_dict)[0], int(self.screen_pad*0.45),
-                                              "bold", col=0, widgetkwargs={"width": 12, "justify": "right",
+                                              "bold", col=0,  widgetkwargs={"width": 12, "justify": "right",
                                                                            "foreground": self.theme_color})
         self.label_quantity = denom_frame.Label(self.dict_to_text(self.denom_dict)[1], int(self.screen_pad * 0.45),
                                                 "bold", col=1, widgetkwargs={"width": 12, "justify": "right"})
@@ -182,10 +183,10 @@ class App(Tkm.ThemedTKinterFrame):
         # theme widget options
         if self.theme == "park" and self.mode == "dark":
             self.done = button_frame.AccentButton('Зачислить', self.receipt)
-            self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style="park.TButton")
+            self.back_button = frame3.Button("\n".join("НАЗАД"), lambda: self.select_tab(3), col=3, rowspan=3, style="park.TButton")
         else:
             self.done = button_frame.Button('Зачислить', self.receipt)
-            self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style='x.TButton')
+            self.back_button = frame3.Button("\n".join("НАЗАД"), lambda: self.select_tab(3), col=3, rowspan=3, style='x.TButton')
 
         # Tab4 #
         self.frame4 = self.tab4.addFrame("Выбор счета")
@@ -195,7 +196,7 @@ class App(Tkm.ThemedTKinterFrame):
                                          'subfiles', ['name', 'purpose'], col=0, row=1, colspan=7, rowspan=7,
                                          widgetkwargs={"style": "Treeview"})
         self.tree.bind("<<TreeviewSelect>>", self.tree_selection)
-        self.frame4.Button('❮', lambda: self.select_tab(0), col=7, rowspan=9, style='x.TButton')
+        self.frame4.Button("\n".join("НАЗАД"), lambda: self.select_tab(0), col=7, rowspan=9, style='x.TButton')
         self.accept_button = self.frame4.Button(text="Выбрать", col=0, row=8, colspan=7, command=self.deposit_start)
 
         # Tab5 #
@@ -206,7 +207,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.label5 = self.frame5.Label("Заберите чек", int(self.screen_pad * 0.8), col=1, row=0, colspan=4,
                                         widgetkwargs={"foreground": self.theme_color})
         self.receipt_text = self.frame5.Text("", col=1, row=1, colspan=2, sticky="n")
-        self.frame5.Button('❮', lambda: self.select_tab(0), col=9, style='x.TButton', rowspan=7)
+        self.frame5.Button("\n".join("НАЗАД"), lambda: self.select_tab(0), col=9, style='x.TButton', rowspan=7)
 
         # Tab6 #
         self.frame6 = self.tab6.addFrame("Операционный день закрыт")
@@ -217,7 +218,7 @@ class App(Tkm.ThemedTKinterFrame):
                                        border=False)
         self.denom_text.tag_configure("center", justify='center')
         self.denom_text.grid(column=0, row=2, columnspan=4, rowspan=4, sticky="n", ipady=0)
-        self.frame6.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
+        self.frame6.Button("\n".join("НАЗАД"), lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
 
         # Tab7 #
         self.frame7 = self.tab7.addFrame("Операционный день открыт")
@@ -229,7 +230,7 @@ class App(Tkm.ThemedTKinterFrame):
                                         border=False)
         self.denom_text1.tag_configure("center", justify='center')
         self.denom_text1.grid(column=0, row=2, columnspan=4, rowspan=4, ipady=0)
-        self.frame7.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
+        self.frame7.Button("\n".join("НАЗАД"), lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
 
         # Tab8 #
         frame8 = self.tab8.addFrame("Откройте смену")
@@ -237,7 +238,7 @@ class App(Tkm.ThemedTKinterFrame):
         frame_msg.Label("Операционный день закрыт.\n Для начала работы откройте\n операционный день.",
                         size=int(self.screen_pad * 0.8), widgetkwargs={"foreground": self.theme_color,
                                                                        "justify": "center"})
-        frame8.Button('❮', lambda: self.select_tab(0), col=4, style='x.TButton')
+        frame8.Button("\n".join("НАЗАД"), lambda: self.select_tab(0), col=4, style='x.TButton')
 
         # Tab9 #
         self.image = tkinter.PhotoImage(file="deep.png")
@@ -258,6 +259,7 @@ class App(Tkm.ThemedTKinterFrame):
 
     def show(self):
         self.root.deiconify()
+        self.user_field.focus_set()
 
     def screensaver_start(self):
         if self.current_tab() == 0:
@@ -384,7 +386,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.label_quantity.configure(text=self.dict_to_text(self.denom_dict)[1])
         self.label_deposit.configure(text=self.count)
         self.back_button.configure(state="normal")
-        self.receipt_text.configure(text=receipt_total, font="Courier", justify="center")
+        self.receipt_text.configure(text=receipt_total, font=("Courier", int(self.screen_pad*0.25)), justify="center")
         self.image_qr = tkinter.PhotoImage(file="tmpqr.png")
         self.qr_label.configure(image=self.image_qr)
 
