@@ -246,7 +246,7 @@ class App(Tkm.ThemedTKinterFrame):
         # Tab9 #
         self.image = tkinter.PhotoImage(file="deep.png")
         self.deep_label = ttk.Label(self.tab9.master, image=self.image)
-        self.deep_label.grid(row=0, column=0, columnspan=2)
+        self.deep_label.pack(expand=True)
 
         # Turn on power-board and init validator
         self.engine = Engine()
@@ -275,7 +275,7 @@ class App(Tkm.ThemedTKinterFrame):
     def restart_screensaver(self, event=None):
         if self.timer is not None:
             self.root.after_cancel(self.timer)
-        self.timer = self.root.after(150000, self.screensaver_start)
+        self.timer = self.root.after(3000, self.screensaver_start)
 
     def current_tab(self):
         return self.notebook.notebook.tabs().index(self.notebook.notebook.select())
