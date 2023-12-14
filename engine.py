@@ -36,9 +36,9 @@ class Engine:
             power_desc = value
             for port, descriptor in ports_in_system.items():
                 if power_desc.lower() in descriptor.lower():
-                    return port  # , descriptor
+                    return port
 
-    def power_on_0ff(self, command):
+    def power_on(self, command):
         port = self.find_in_descriptor("USB Serial Port")
         try:
             self.serial_port = serial.Serial(port, 9600, timeout=0.4, inter_byte_timeout=0.3)
@@ -67,6 +67,8 @@ class Engine:
         if not self.serial_port:
             text = "power port 'USB Serial Port' not found"
             self.write_logs("a+", text)
+
+        return self.serial_port
 
     def validator_init(self):
         port = self.find_in_descriptor("ch a")

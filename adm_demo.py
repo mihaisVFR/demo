@@ -53,6 +53,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.root.bind("<Return>", self.enter_key)
         self.root.iconbitmap(default='adm.ico')
         self.timer = None  # timer of screensaver
+        self.receipt_timer = None  # show receipt timer
         self.client = ""  # user data
         self.account = ""  # user account
         self.img = None  # qr code image print size
@@ -115,6 +116,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.frame1 = self.tab1.addFrame("-")
         self.frame1.Label("ЛОГИН", int(self.screen_pad * 0.8), "bold", col=0, row=0, padx=0)
         self.frame1.Label("ПАРОЛЬ", int(self.screen_pad * 0.8), "bold", col=0, row=1, padx=0)
+        self.bar = ttk.Progressbar(self.frame1.master, length=self.screen_pad * 3)
         entry_kwargs = {"font": ("helvetica", int(self.screen_pad * 0.8), "bold"), "width": 7}
 
         self.user_field = self.frame1.Entry(textvariable=self.user_text, col=1, row=0, widgetkwargs=entry_kwargs,
@@ -152,7 +154,6 @@ class App(Tkm.ThemedTKinterFrame):
         self.button_del.bind("<ButtonRelease>", self.del_released)
         self.button_del.bind("<ButtonPress>", self.del_pressed)
 
-
         # Tab2 #
         kwargs = {"state": "normal"}, {"state": "disable"}
         if self.data[0]["day_state"]:
@@ -166,12 +167,12 @@ class App(Tkm.ThemedTKinterFrame):
 
         # Tab3 #
         frame3 = self.tab3.addFrame("Внесение")
-        deposit_frame = frame3.addLabelFrame("", col=0,pady=0, row=2,)
-        denom_frame = frame3.addLabelFrame("", col=0, row=0,pady=0, rowspan=2)
+        deposit_frame = frame3.addLabelFrame("", col=0, pady=0, row=2,)
+        denom_frame = frame3.addLabelFrame("", col=0, row=0, pady=0, rowspan=2)
         button_frame = frame3.addFrame(name="", col=2, row=1, rowspan=2)
         self.label_denoms = denom_frame.Label(self.dict_to_text(self.denom_dict)[0], int(self.screen_pad*0.45),
                                               "bold", col=0,  widgetkwargs={"width": 12, "justify": "right",
-                                                                           "foreground": self.theme_color})
+                                                                            "foreground": self.theme_color})
         self.label_quantity = denom_frame.Label(self.dict_to_text(self.denom_dict)[1], int(self.screen_pad * 0.45),
                                                 "bold", col=1, widgetkwargs={"width": 12, "justify": "right"})
         self.label_deposit = deposit_frame.Label(self.count, int(self.screen_pad), "bold",
@@ -183,10 +184,12 @@ class App(Tkm.ThemedTKinterFrame):
         # theme widget options
         if self.theme == "park" and self.mode == "dark":
             self.done = button_frame.AccentButton('Зачислить', self.receipt)
-            self.back_button = frame3.Button("\n".join("НАЗАД"), lambda: self.select_tab(3), col=3, rowspan=3, style="park.TButton")
+            self.back_button = frame3.Button("\n".join("НАЗАД"), lambda: self.select_tab(3), col=3, rowspan=3,
+                                             style="park.TButton")
         else:
             self.done = button_frame.Button('Зачислить', self.receipt)
-            self.back_button = frame3.Button("\n".join("НАЗАД"), lambda: self.select_tab(3), col=3, rowspan=3, style='x.TButton')
+            self.back_button = frame3.Button("\n".join("НАЗАД"), lambda: self.select_tab(3), col=3, rowspan=3,
+                                             style='x.TButton')
 
         # Tab4 #
         self.frame4 = self.tab4.addFrame("Выбор счета")
@@ -207,7 +210,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.label5 = self.frame5.Label("Заберите чек", int(self.screen_pad * 0.8), col=1, row=0, colspan=4,
                                         widgetkwargs={"foreground": self.theme_color})
         self.receipt_text = self.frame5.Text("", col=1, row=1, colspan=2, sticky="n")
-        self.frame5.Button("\n".join("НАЗАД"), lambda: self.select_tab(0), col=9, style='x.TButton', rowspan=7)
+        self.frame5.Button("\n".join("НАЗАД"), self.receipt_return, col=9, style='x.TButton', rowspan=7)
 
         # Tab6 #
         self.frame6 = self.tab6.addFrame("Операционный день закрыт")
@@ -247,7 +250,7 @@ class App(Tkm.ThemedTKinterFrame):
 
         # Turn on power-board and init validator
         self.engine = Engine()
-        self.engine.power_on_0ff(TURN_ON)
+        self.board_port = self.engine.power_on(TURN_ON)
         self.port = self.engine.validator_init()
         # Start screensaver
         self.restart_screensaver()
@@ -256,7 +259,6 @@ class App(Tkm.ThemedTKinterFrame):
         self.root.after(500, self.show)
 
     # GUI functions #
-
     def show(self):
         self.root.deiconify()
         self.user_field.focus_set()
@@ -277,6 +279,10 @@ class App(Tkm.ThemedTKinterFrame):
 
     def current_tab(self):
         return self.notebook.notebook.tabs().index(self.notebook.notebook.select())
+
+    def to_start_page(self):
+        if self.current_tab() == 4:
+            self.select_tab(0)
 
     def select_tab(self, tab):
         self.notebook.notebook.select(tab)
@@ -307,22 +313,23 @@ class App(Tkm.ThemedTKinterFrame):
         self.password_field.config(foreground=color)
 
     def hide_pass(self):
-        self.password_field.configure(show="✳")
+        self.password_field.configure(show="✱")
 
     def show_pass(self):
         self.password_field.configure(show="")
         self.root.after(500, self.hide_pass)
 
-    def set_default_entry(self):
+    def clear_entry(self):
         self.user_field.delete(0, "end")
         self.password_field.delete(0, "end")
+        self.edit_field = self.user_field
+        self.user_field.focus_set()
 
     def state_butons_config(self, state_done, state_back):
         self.done.configure(state=state_done)
         self.back_button.configure(state=state_back)
 
     # Functions of the main logic of the program (with configure widgets after events) #
-
     def day_status_text(self, widget, denoms_dict, text):
         """Configure Close/Open bank day page Text widget"""
         widget.configure(state="normal")
@@ -396,6 +403,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.receipt_display(receipt_data)
         self.select_tab(4)
         print_receipt(receipt_data, "print_qr.png", str(self.receipt_number), image=True)
+        self.receipt_timer = self.root.after(30000, self.to_start_page)
 
     def easter_egg(self, password):
         if os.path.isfile("ficha.png.crp"):
@@ -410,8 +418,17 @@ class App(Tkm.ThemedTKinterFrame):
         close_buttton.grid(column=0)
         crypt("ficha.png", password)
 
+    def waiting(self):
+        self.bar.grid(column=2, row=0)
+        self.bar.start()
+
+    def receipt_return(self):
+        self.root.after_cancel(self.receipt_timer)
+        self.select_tab(0)
+
     # Authorization methods #
     def authorization(self):
+        self.root.after(30, self.waiting)
         input_user = self.user_field.get()
         input_pass = self.password_field.get()
         user = get_user(input_user)
@@ -426,25 +443,31 @@ class App(Tkm.ThemedTKinterFrame):
         elif input_user == "6" and input_pass == "6":
             self.change_theme("sun-valley", "dark")
         elif input_user == "31" and input_pass == "31":
-            self.engine.power_on_0ff(TURN_OFF)
+            self.board_port.open()
+            self.board_port.write(TURN_OFF)
+            self.board_port.close()
+            self.clear_entry()
         elif input_user == "32" and input_pass == "32":
-            self.engine.power_on_0ff(TURN_ON)
-            self.engine.validator_init()
+            self.engine.power_on(TURN_ON)
+            self.port = self.engine.validator_init()
+            self.clear_entry()
         elif input_user == "55" and input_pass == "55":
             self.engine.send_to_port(CMD_B5)
+            self.clear_entry()
             self.root.after(100, lambda: self.engine.send_to_port(RESP_B5))
         elif input_user == "03" and input_pass == "03":
             self.port.close()
             self.handleExit()
         else:
             self.flashing()
+        self.bar.grid_forget()
 
     def verify_db_user(self, user, input_pass):
         user_dict = user.to_dict()
         if user_dict["status"] == "Кассир":
             password_hash = user_dict["password"]
             if pwd_context.verify(input_pass, password_hash):
-                self.set_default_entry()
+                self.clear_entry()
                 if self.day_status:
                     for i in self.tree.get_children():
                         self.tree.delete(i)
@@ -461,7 +484,7 @@ class App(Tkm.ThemedTKinterFrame):
         elif user_dict["status"] == "Инкассатор":
             password_hash = user_dict["password"]
             if pwd_context.verify(input_pass, password_hash):
-                self.set_default_entry()
+                self.clear_entry()
                 self.select_tab(1)
             else:
                 self.flashing()
@@ -574,11 +597,7 @@ class App(Tkm.ThemedTKinterFrame):
             self.root.after(200,  self.backspace)
 
     def digit_buttons(self, digit):
-        if self.edit_field.get().isdigit() or self.edit_field.get() == "":
-            self.edit_field.insert("end", digit)
-        else:
-            self.edit_field.delete("0", "end")
-            self.edit_field.insert("end", digit)
+        self.edit_field.insert("end", digit)
 
     def del_released(self, event):
         self.del_flag = False
