@@ -42,7 +42,7 @@ def print_qr(file_name, h_dc):
     y1 = int((printer_size[1] - scaled_height) / 2)
     x2 = x1 + scaled_width
     y2 = y1 + scaled_height
-    dib.draw(h_dc.GetHandleOutput(), (x1, y1+30, x2, y2+30))
+    dib.draw(h_dc.GetHandleOutput(), (x1, y1, x2, y2))
     h_dc.EndPage()
 
 

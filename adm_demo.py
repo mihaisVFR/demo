@@ -116,7 +116,6 @@ class App(Tkm.ThemedTKinterFrame):
         self.frame1 = self.tab1.addFrame("-")
         self.frame1.Label("ЛОГИН", int(self.screen_pad * 0.8), "bold", col=0, row=0, padx=0)
         self.frame1.Label("ПАРОЛЬ", int(self.screen_pad * 0.8), "bold", col=0, row=1, padx=0)
-        self.bar = ttk.Progressbar(self.frame1.master, length=self.screen_pad * 3)
         entry_kwargs = {"font": ("helvetica", int(self.screen_pad * 0.8), "bold"), "width": 7}
 
         self.user_field = self.frame1.Entry(textvariable=self.user_text, col=1, row=0, widgetkwargs=entry_kwargs,
@@ -275,7 +274,7 @@ class App(Tkm.ThemedTKinterFrame):
     def restart_screensaver(self, event=None):
         if self.timer is not None:
             self.root.after_cancel(self.timer)
-        self.timer = self.root.after(3000, self.screensaver_start)
+        self.timer = self.root.after(150000, self.screensaver_start)
 
     def current_tab(self):
         return self.notebook.notebook.tabs().index(self.notebook.notebook.select())
@@ -418,17 +417,12 @@ class App(Tkm.ThemedTKinterFrame):
         close_buttton.grid(column=0)
         crypt("ficha.png", password)
 
-    def waiting(self):
-        self.bar.grid(column=2, row=0)
-        self.bar.start()
-
     def receipt_return(self):
         self.root.after_cancel(self.receipt_timer)
         self.select_tab(0)
 
     # Authorization methods #
     def authorization(self):
-        self.root.after(30, self.waiting)
         input_user = self.user_field.get()
         input_pass = self.password_field.get()
         user = get_user(input_user)
@@ -460,7 +454,6 @@ class App(Tkm.ThemedTKinterFrame):
             self.handleExit()
         else:
             self.flashing()
-        self.bar.grid_forget()
 
     def verify_db_user(self, user, input_pass):
         user_dict = user.to_dict()
