@@ -20,8 +20,8 @@ class Load:
         bar = ttk.Progressbar(orient="horizontal")
         bar.pack(fill="x", padx=100, pady=y/3)
         bar.start()
-        label = ttk.Label(root, text="Загрузка...", font=("Arial", 18, "bold"), background="#1c1c1c",
-                               foreground="white")
+        label = ttk.Label(root, text="Загрузка...", font=("Arial", 18, "bold"),
+                          background="#1c1c1c", foreground="white")
         label.pack(pady=20)
         button = ttk.Button(root, command=self.reboot, text="Перезагрузить", style="Fancy.TButton")
         button.pack(pady=20)

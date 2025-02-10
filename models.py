@@ -43,16 +43,19 @@ class Clients(Base):
     name = Column(String(32))
     account = Column(String, unique=True)
     user_login = Column(Integer, ForeignKey('user.user_login'))
+    adres = Column(String(255))
 
-    def __init__(self, name, account, user_login):
+    def __init__(self, name, account, user_login, adres):
         self.name = name
         self.account = account
         self.user_login = user_login
+        self.adres = adres
 
     def to_dict(self):
         desearialaze = {
             "name": self.name,
-            "purpose": self.account
+            "purpose": self.account,
+            "adres": self.adres
         }
         return desearialaze
 
@@ -93,6 +96,11 @@ def get_user(user_login):
     if data is not None:
         return data
 
+def get_client(user_login):
+    data = session.query(Clients).filter_by(user_login=user_login).first()
+    if data is not None:
+        return data
+
 
 def add_user(user_status, name, password):
     ent = User(user_status=user_status, user_login=name, hash_password=pwd_context.hash(password))
@@ -105,16 +113,22 @@ def add_users():
     add_user("Инкассатор", "2222", "2222")
     add_user("Кассир", "3333", "3333")
     add_user("Об авторах", "911", "119")
+    add_user("Отчеты", "4444", "4444")
 
 
 def add_clients():
-    add_client("ООО Дионис", "40702810020202020202", "1111")
-    add_client("ООО Солар", "40702810030303030303", "1111")
-    add_client("ИП Иванов", "40802810010203040506", "1111")
-    add_client("ИП Бокарев", "40802810123321098890", "3333")
+    add_client("ООО Дионис", "40702810020202020202", "1111",
+               "АДМ №213445 121096\nг.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n ")
+    add_client("ООО Солар", "40702810030303030303", "1111",
+               "АДМ №213445 121096\nг.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n ")
+    add_client("ИП Иванов", "40802810010203040506", "1111",
+               "АДМ №213445 121096\nг.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n ")
+    add_client("ИП Бокарев", "40802810123321098890", "3333",
+               "АДМ №213445 121096\nг.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n ")
 
-def add_client(name, account, user_login):
-    ent = Clients(name=name, account=account, user_login=user_login)
+
+def add_client(name, account, user_login, adres):
+    ent = Clients(name=name, account=account, user_login=user_login, adres=adres)
     session.add(ent)
     session.commit()
 
@@ -125,3 +139,5 @@ def refill_db():
     add_users()
     # from_json_to_db()
     add_clients()
+
+# refill_db()

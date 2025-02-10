@@ -11,3 +11,107 @@
 2025-02-10 13:43:10.162382 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
 2025-02-10 13:43:10.169388 No available ports in system
 2025-02-10 13:43:12.283275 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:43:09.092024 No available ports in system
+2025-02-10 15:43:09.093013 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:43:09.096013 No available ports in system
+2025-02-10 15:43:11.211502 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:43:20.804571 No available ports in system
+2025-02-10 15:43:20.804571 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:43:20.807571 No available ports in system
+2025-02-10 15:43:22.931177 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:44:26.000301 No available ports in system
+2025-02-10 15:44:26.001303 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:44:26.004302 No available ports in system
+2025-02-10 15:44:28.126780 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:45:16.732373 No available ports in system
+2025-02-10 15:45:16.732373 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:45:16.735380 No available ports in system
+2025-02-10 15:45:18.851772 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:45:35.915893 No available ports in system
+2025-02-10 15:45:35.915893 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:45:35.918893 No available ports in system
+2025-02-10 15:45:38.034125 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:46:36.396509 No available ports in system
+2025-02-10 15:46:36.396509 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:46:36.399501 No available ports in system
+2025-02-10 15:46:38.525963 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:47:49.799767 No available ports in system
+2025-02-10 15:47:49.800767 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:47:49.803768 No available ports in system
+2025-02-10 15:47:51.930714 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:48:04.183559 No available ports in system
+2025-02-10 15:48:04.183559 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:48:04.187551 No available ports in system
+2025-02-10 15:48:06.301893 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:48:43.230059 No available ports in system
+2025-02-10 15:48:43.230059 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:48:43.233059 No available ports in system
+2025-02-10 15:48:45.349101 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:50:57.141538 No available ports in system
+2025-02-10 15:50:57.142524 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:50:57.145526 No available ports in system
+2025-02-10 15:50:59.265786 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:51:22.430831 No available ports in system
+2025-02-10 15:51:22.431842 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:51:22.434843 No available ports in system
+2025-02-10 15:51:24.557353 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:52:03.441068 No available ports in system
+2025-02-10 15:52:03.442067 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:52:03.445068 No available ports in system
+2025-02-10 15:52:05.566125 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:54:04.537532 No available ports in system
+2025-02-10 15:54:04.537532 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:54:04.540532 No available ports in system
+2025-02-10 15:54:06.666746 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:54:54.985533 No available ports in system
+2025-02-10 15:54:54.985533 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:54:54.988533 No available ports in system
+2025-02-10 15:54:57.107296 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:55:24.167755 No available ports in system
+2025-02-10 15:55:24.167755 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:55:24.171756 No available ports in system
+2025-02-10 15:55:26.294452 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:57:21.984218 No available ports in system
+2025-02-10 15:57:21.984218 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:57:21.987218 No available ports in system
+2025-02-10 15:57:24.102666 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:58:47.243061 No available ports in system
+2025-02-10 15:58:47.243061 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:58:47.247049 No available ports in system
+2025-02-10 15:58:49.365536 error open port 'Attempting to use a port that is not open'
+2025-02-10 15:59:22.995441 No available ports in system
+2025-02-10 15:59:22.996443 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 15:59:22.999442 No available ports in system
+2025-02-10 15:59:25.114599 error open port 'Attempting to use a port that is not open'
+2025-02-10 16:00:29.312079 No available ports in system
+2025-02-10 16:00:29.313081 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 16:00:29.316080 No available ports in system
+2025-02-10 16:00:31.437024 error open port 'Attempting to use a port that is not open'
+2025-02-10 16:03:43.856906 No available ports in system
+2025-02-10 16:03:43.856906 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 16:03:43.859907 No available ports in system
+2025-02-10 16:03:45.971586 error open port 'Attempting to use a port that is not open'
+2025-02-10 16:04:53.489851 No available ports in system
+2025-02-10 16:04:53.489851 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 16:04:53.492845 No available ports in system
+2025-02-10 16:04:55.599960 error open port 'Attempting to use a port that is not open'
+2025-02-10 16:21:37.086895 No available ports in system
+2025-02-10 16:21:37.087871 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 16:21:37.090872 No available ports in system
+2025-02-10 16:21:39.201103 error open port 'Attempting to use a port that is not open'
+2025-02-10 16:23:52.795870 No available ports in system
+2025-02-10 16:23:52.795870 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 16:23:52.798864 No available ports in system
+2025-02-10 16:23:54.907400 error open port 'Attempting to use a port that is not open'
+2025-02-10 16:25:49.309227 No available ports in system
+2025-02-10 16:25:49.310229 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 16:25:49.313228 No available ports in system
+2025-02-10 16:25:51.430991 error open port 'Attempting to use a port that is not open'
+2025-02-10 16:35:48.874220 No available ports in system
+2025-02-10 16:35:48.874220 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 16:35:48.877232 No available ports in system
+2025-02-10 16:35:50.987534 error open port 'Attempting to use a port that is not open'
+2025-02-10 16:36:58.230228 No available ports in system
+2025-02-10 16:36:58.231237 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-10 16:36:58.234236 No available ports in system
+2025-02-10 16:37:00.348476 error open port 'Attempting to use a port that is not open'

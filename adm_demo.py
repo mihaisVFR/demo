@@ -5,7 +5,7 @@ from threading import Timer as threading_Timer
 import TKinterModernThemes as Tkm
 import tkinter
 from prettytable import PrettyTable
-from models import get_user
+from models import get_user, get_client
 from passlib.apps import custom_app_context as pwd_context
 from pyAesCrypt import encryptFile, decryptFile
 from engine import *
@@ -63,7 +63,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.day_status = self.data[0]["day_state"]  # bank day status
         self.receipt_number = int(self.data[0]['receipt_number'])
         self.del_flag = True  # if button pressed backspace foo repeat
-        self.adres = "АДМ №213445 121096\nг.Москва\nул.Кастанаевская, д.24 \nEMAIL: sales@deep2000.ru\n"
+        self.adres = ""
 
         self.user_text = tkinter.StringVar()
         self.password_text = tkinter.StringVar()
@@ -109,6 +109,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.tab7 = self.notebook.addTab("Откр. опер. день")
         self.tab8 = self.notebook.addTab("Ошибка опер. день")
         self.tab9 = self.notebook.addTab("ScreenSaver")
+        self.tab10 = self.notebook.addTab("Отчеты X и Z")
 
         # Tab1 #
         self.frame1 = self.tab1.addFrame("-")
@@ -243,6 +244,15 @@ class App(Tkm.ThemedTKinterFrame):
         self.image = tkinter.PhotoImage(file="deep.png")
         self.deep_label = ttk.Label(self.tab9.master, image=self.image)
         self.deep_label.grid(row=0, column=0, columnspan=2)
+
+        # Tab10 #
+        frame10 = self.tab10.addFrame("Отчеты")
+        self.open_button = frame10.AccentButton("X отчет", self.day_open, col=0, row=0, colspan=4,
+                                                padx=self.screen_pad / 2, pady=self.screen_pad / 2)
+        self.close_button = frame10.AccentButton("Z отчет", self.day_close, col=0, row=1, colspan=4,
+                                                 padx=self.screen_pad / 2, pady=self.screen_pad / 2)
+        frame10.Button('❮', lambda: self.select_tab(0), col=4, rowspan=2, style='x.TButton')
+
 
         # Turn on power-board and init validator
         self.engine = Engine()
@@ -413,8 +423,10 @@ class App(Tkm.ThemedTKinterFrame):
         input_user = self.user_field.get()
         input_pass = self.password_field.get()
         user = get_user(input_user)
+        client = get_client(input_user)
+        print(client)
         if user:
-            self.verify_db_user(user, input_pass)
+            self.verify_db_user(user, client, input_pass)
         elif input_user == "3" and input_pass == "3":
             self.change_theme("azure", "light")
         elif input_user == "4" and input_pass == "4":
@@ -437,8 +449,10 @@ class App(Tkm.ThemedTKinterFrame):
         else:
             self.flashing()
 
-    def verify_db_user(self, user, input_pass):
+    def verify_db_user(self, user, client, input_pass):
         user_dict = user.to_dict()
+        client_dict = client.to_dict()
+        self.adres = client_dict["adres"]
         if user_dict["status"] == "Кассир":
             password_hash = user_dict["password"]
             if pwd_context.verify(input_pass, password_hash):
@@ -468,6 +482,14 @@ class App(Tkm.ThemedTKinterFrame):
             password_hash = user_dict["password"]
             if pwd_context.verify(input_pass, password_hash):
                 self.easter_egg(input_pass)
+            else:
+                self.flashing()
+
+        elif user_dict["status"] == "Отчеты":
+            password_hash = user_dict["password"]
+            if pwd_context.verify(input_pass, password_hash):
+                self.set_default_entry()
+                self.select_tab(9)
             else:
                 self.flashing()
 
@@ -632,6 +654,7 @@ if __name__ == '__main__':
     freeze_support()
     process = Process(target=loading)
     process.start()
-    #app = App()
-    #process.terminate()
-    #app.run(onlyFrames=False)
+    time.sleep(5)
+    app = App()
+    process.terminate()
+    app.run(onlyFrames=False)
