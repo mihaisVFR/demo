@@ -1,4 +1,5 @@
 import sys
+import os
 from subprocess import call
 from json import load, dump
 from threading import Timer as threading_Timer
@@ -44,7 +45,7 @@ class App(Tkm.ThemedTKinterFrame):
     read from com port"""
     def __init__(self):
 
-        self.data = self.json_read()
+        self.data = self.json_read("variables.json")
         self.theme = self.data[2]["theme"]
         self.mode = self.data[2]["mode"]
         Tkm.firstWindow = True  # when change theme must be root window
@@ -301,11 +302,17 @@ class App(Tkm.ThemedTKinterFrame):
         self.client = item["text"]
         self.account = item["values"][0]
 
+    def client_counter(self):
+        file = f"{self.account}.json"
+        if not os.path.exists(file):
+            with open(f"{self.account}.json", "w"):
+                self.json_write(self.data, file)
+
     def change_theme(self, theme, mode):
         self.port_close()
         self.data[2]["theme"] = theme
         self.data[2]["mode"] = mode
-        self.json_write(self.data)
+        self.json_write(self.data, "variables.json")
         self.handleExit()
         restart_program()
 
@@ -349,7 +356,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.open_button.configure(state="normal")
         self.day_status = False
         self.data[0]["day_state"] = self.day_status
-        self.json_write(self.data)
+        self.json_write(self.data, "variables.json")
         self.day_status_text(self.denom_text, self.data[1].items(), "ОПЕРАЦИОННЫЙ ДЕНЬ\nЗАКРЫТ")
         text = self.denom_text.get("0.0", "end")
         print_receipt(text, receipt="close day", image=False)
@@ -365,7 +372,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.data[0]["day_state"] = self.day_status
         self.data[0]["receipt_number"] = self.receipt_number
         self.data[1] = self.drop_dict(self.data[1])
-        self.json_write(self.data)
+        self.json_write(self.data, "variables.json")
         self.day_status_text(self.denom_text1, self.denom_dict.items(), "ОПЕР. ДЕНЬ ОТКРЫТ\nСЧЕТЧИКИ ОБНУЛЕНЫ")
         text = self.denom_text1.get("0.0", "end")
         print_receipt(text, receipt="open day", image=False)
@@ -377,7 +384,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.data[0]["receipt_number"] = self.receipt_number
         for denom in self.data[1].keys():
             self.data[1][denom] += self.denom_dict[denom]
-        self.json_write(self.data)
+        self.json_write(self.data, "variables.json")
         self.denom_dict = self.drop_dict(self.denom_dict)
         self.count = 0
 
@@ -625,13 +632,13 @@ class App(Tkm.ThemedTKinterFrame):
             self.deposit_start()
 
     # Auxiliary methods #
-    def json_read(self):
-        with open("variables.json", "r", encoding="utf-8") as f:
+    def json_read(self, file):
+        with open(file , "r", encoding="utf-8") as f:
             all_variables = load(f)
             return all_variables
 
-    def json_write(self, data):
-        with open("variables.json", "w", encoding="utf-8") as f:
+    def json_write(self, data, file):
+        with open(file , "w", encoding="utf-8") as f:
             dump(data, f)
 
     def dict_to_text(self, dct):
