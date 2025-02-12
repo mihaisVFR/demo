@@ -56,6 +56,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.timer = None  # timer of screensaver
         self.client = ""  # user data
         self.account = ""  # user account
+        self.chosen_client = {}  # chosen client in tree
         self.img = None  # qr code image print size
         self.image_qr = None  # qr code image label size
         self.count = 0  # quantity of count notes
@@ -301,12 +302,15 @@ class App(Tkm.ThemedTKinterFrame):
         item = self.tree.item(self.tree.selection())
         self.client = item["text"]
         self.account = item["values"][0]
+        chosen_client = get_client(str(self.account))
+        self.chosen_client = chosen_client.to_dict()
 
     def client_counter(self):
         file = f"{self.account}.json"
         if not os.path.exists(file):
             with open(f"{self.account}.json", "w"):
                 self.json_write(self.data, file)
+        return file
 
     def change_theme(self, theme, mode):
         self.port_close()
@@ -468,7 +472,7 @@ class App(Tkm.ThemedTKinterFrame):
                         self.tree.delete(i)
                     for data in user.client:
                         tree_row = data.to_dict()
-                        self.tree.insert('', 'end', text=tree_row["name"], values=tree_row["purpose"])
+                        self.tree.insert('', 'end', text=tree_row["name"], values=tree_row["account"])
                     self.select_tab(3)
                     self.tree.selection_add(self.tree.get_children()[0])
                 else:
@@ -501,6 +505,7 @@ class App(Tkm.ThemedTKinterFrame):
 
     # Count methods #
     def deposit_start(self):
+        self.adres = self.chosen_client["adres"]
         self.count = 0
         self.state_butons_config("disable", "normal")
         try:

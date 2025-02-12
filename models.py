@@ -54,7 +54,7 @@ class Clients(Base):
     def to_dict(self):
         desearialaze = {
             "name": self.name,
-            "purpose": self.account,
+            "account": self.account,
             "adres": self.adres
         }
         return desearialaze
@@ -68,7 +68,7 @@ def from_json_to_db():
     with open('treeviewdata.json', encoding="utf-8") as f:
         tree = json.load(f)
         for i in tree:
-            entry_name = Clients(name=i["name"], account=i["purpose"], user_login="1111")
+            entry_name = Clients(name=i["name"], account=i["account"], user_login="1111")
             session.add(entry_name)
         session.commit()
 
@@ -96,8 +96,11 @@ def get_user(user_login):
     if data is not None:
         return data
 
-def get_client(user_login):
-    data = session.query(Clients).filter_by(user_login=user_login).first()
+
+def get_client(account):
+    print(account)
+    data = session.query(Clients).filter_by(account=account).first()
+    print(data)
     if data is not None:
         return data
 
