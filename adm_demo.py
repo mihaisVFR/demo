@@ -86,6 +86,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.style.configure('eye.TButton', font=("Webdings", int(self.screen_pad)), justify='center', )
         self.style.configure('park.TButton', font=("Arial", int(self.screen_pad * 0.5), "bold"), justify='center',
                              foreground="red", width=1)
+        self.style.configure('O.TButton', font=("Arial", int(self.screen_pad * 0.5), "bold"), justify='center')
         self.style.map('park.TButton', foreground=[('disabled', '#706f6f')])
         self.style.configure('accept.TButton', font=("Arial", int(self.screen_pad * 0.9), "bold"), justify='center',
                              foreground="red")
@@ -166,9 +167,8 @@ class App(Tkm.ThemedTKinterFrame):
 
         # Tab3 #
         frame3 = self.tab3.addFrame("Внесение")
-        deposit_frame = frame3.addLabelFrame("", col=0, row=2,)
-        denom_frame = frame3.addLabelFrame("", col=0, row=0, rowspan=2)
-        button_frame = frame3.addFrame(name="", col=2, row=1, rowspan=2)
+        deposit_frame = frame3.addLabelFrame("", col=0, row=3) #, pady=5)
+        denom_frame = frame3.addLabelFrame("", col=0, row=0, rowspan=3)
         self.label_denoms = denom_frame.Label(self.dict_to_text(self.denom_dict)[0], int(self.screen_pad*0.45),
                                               "bold", col=0, widgetkwargs={"width": 12, "justify": "right",
                                                                            "foreground": self.theme_color})
@@ -178,15 +178,18 @@ class App(Tkm.ThemedTKinterFrame):
                                                  col=0, row=1, widgetkwargs={"justify": "center"})
 
         frame3.Label("Внесите банкноты.\nМаксимальное\nколичество-\n200 банкнот", int(self.screen_pad*0.6), "bold",
-                     col=2, row=0, widgetkwargs={"justify": "center", "foreground": self.theme_color})
+                     col=2, row=0, colspan=2,  widgetkwargs={"justify": "center", "foreground": self.theme_color})
+
+        self.x_button = frame3.Button("X отчет", self.day_open, style='O.TButton', col=2, row=1)
+        self.z_button = frame3.Button("Z отчет", self.day_close, style='O.TButton', col=3, row=1)
 
         # theme widget options
         if self.theme == "park" and self.mode == "dark":
-            self.done = button_frame.AccentButton('Зачислить', self.receipt)
-            self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style="park.TButton")
+            self.done = frame3.AccentButton('Зачислить', self.receipt,col=2, row=2, rowspan=2, colspan=2, pady=20)
+            self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=4, rowspan=4, style="park.TButton")
         else:
-            self.done = button_frame.Button('Зачислить', self.receipt)
-            self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=3, rowspan=3, style='x.TButton')
+            self.done = frame3.Button('Зачислить', self.receipt, col=2, row=2, rowspan=2, colspan=2, pady=20)
+            self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=4, rowspan=4, style='x.TButton')
 
         # Tab4 #
         self.frame4 = self.tab4.addFrame("Выбор счета")
@@ -423,10 +426,8 @@ class App(Tkm.ThemedTKinterFrame):
         input_user = self.user_field.get()
         input_pass = self.password_field.get()
         user = get_user(input_user)
-        client = get_client(input_user)
-        print(client)
         if user:
-            self.verify_db_user(user, client, input_pass)
+            self.verify_db_user(user, input_pass)
         elif input_user == "3" and input_pass == "3":
             self.change_theme("azure", "light")
         elif input_user == "4" and input_pass == "4":
@@ -449,10 +450,8 @@ class App(Tkm.ThemedTKinterFrame):
         else:
             self.flashing()
 
-    def verify_db_user(self, user, client, input_pass):
+    def verify_db_user(self, user, input_pass):
         user_dict = user.to_dict()
-        client_dict = client.to_dict()
-        self.adres = client_dict["adres"]
         if user_dict["status"] == "Кассир":
             password_hash = user_dict["password"]
             if pwd_context.verify(input_pass, password_hash):
