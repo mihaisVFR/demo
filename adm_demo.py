@@ -449,7 +449,7 @@ class App(Tkm.ThemedTKinterFrame):
         now = datetime.now()
         file = f"logs/{now.strftime('%d%m')}cnt.log"
         with open(file, mode, encoding='utf-8') as f:
-            f.write(f"\n{now} {encode_text}")
+            f.write(f"\n{encode_text}")
 
     def receipt(self):
         receipt_data = self.receipt_data()
@@ -547,7 +547,7 @@ class App(Tkm.ThemedTKinterFrame):
         chosen_client = self.chosen_client.to_dict()
         self.adres = chosen_client["adres"]
         self.data[0]["adres"] = self.adres
-        self.data[0]["client"] = chosen_client["client"]
+        # self.data[0]["client"] = chosen_client["account"]
         self.json_write(self.data, "variables.json")
         self.client_counter()
         self.count = 0

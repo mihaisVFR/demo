@@ -1,0 +1,25 @@
+
+2025-02-14 19:46:38.839174 No available ports in system
+2025-02-14 19:46:38.839174 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-14 19:46:38.842181 No available ports in system
+2025-02-14 19:46:40.955153 error open port 'Attempting to use a port that is not open'
+2025-02-14 19:49:26.953246 No available ports in system
+2025-02-14 19:49:26.953246 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-14 19:49:26.956232 No available ports in system
+2025-02-14 19:49:29.077019 error open port 'Attempting to use a port that is not open'
+2025-02-14 19:52:03.992351 No available ports in system
+2025-02-14 19:52:04.003843 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-14 19:52:04.007846 No available ports in system
+2025-02-14 19:52:06.132032 error open port 'Attempting to use a port that is not open'
+2025-02-14 19:53:10.145173 No available ports in system
+2025-02-14 19:53:10.145173 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-14 19:53:10.148165 No available ports in system
+2025-02-14 19:53:12.262459 error open port 'Attempting to use a port that is not open'
+2025-02-14 19:54:00.198448 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-02-14 19:55:48.640106 No available ports in system
+2025-02-14 19:55:48.640106 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-14 19:55:48.643113 No available ports in system
+2025-02-14 19:55:50.763150 error open port 'Attempting to use a port that is not open'
+2025-02-14 19:55:59.996020 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
