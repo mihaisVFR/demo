@@ -406,14 +406,18 @@ class App(Tkm.ThemedTKinterFrame):
         print_receipt(text, receipt="open day", image=False)
         self.select_tab(6)
 
+    def update_denoms(self, client_or_variables, file):
+        for denom in client_or_variables[1].keys():
+            client_or_variables[1][denom] += self.denom_dict[denom]
+        self.json_write(self.data, file)
+
     def update_counters(self):
         self.receipt_number += 1
         self.data[0]["day_counter"] += self.count
         self.data[0]["receipt_number"] = self.receipt_number
         self.client_data[0]["day_counter"] += self.count
-        for denom in self.data[1].keys():
-            self.data[1][denom] += self.denom_dict[denom]
-        self.json_write(self.data, "variables.json")
+        self.update_denoms(self.data[1], "variables.json")
+        self.update_denoms(self.client_data[1], f"{self.account}.json")
         self.denom_dict = self.drop_dict(self.denom_dict)
         self.count = 0
 
