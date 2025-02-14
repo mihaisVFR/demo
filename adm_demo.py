@@ -1,5 +1,4 @@
 import sys
-import os
 from subprocess import call
 from json import load, dump
 from threading import Timer as threading_Timer
@@ -57,15 +56,20 @@ class App(Tkm.ThemedTKinterFrame):
         self.client = ""  # user data
         self.account = ""  # user account
         self.chosen_client = None  # chosen client in tree
+        self.client_data = None # client counters json data
         self.img = None  # qr code image print size
         self.image_qr = None  # qr code image label size
         self.count = 0  # quantity of count notes
         self.denom_dict = {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
+        self.droped_client_data = [
+            {"day_counter": 0, "receipt_number": 1},
+            {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}
+        ]
         self.count_event_flag = False  # flag of count event
         self.day_status = self.data[0]["day_state"]  # bank day status
         self.receipt_number = int(self.data[0]['receipt_number'])
         self.del_flag = True  # if button pressed backspace foo repeat
-        self.adres = ""
+        self.adres = self.data[0]["adres"]
 
         self.user_text = tkinter.StringVar()
         self.password_text = tkinter.StringVar()
@@ -169,7 +173,7 @@ class App(Tkm.ThemedTKinterFrame):
 
         # Tab3 #
         frame3 = self.tab3.addFrame("Внесение")
-        deposit_frame = frame3.addLabelFrame("", col=0, row=3) #, pady=5)
+        deposit_frame = frame3.addLabelFrame("", col=0, row=3)
         denom_frame = frame3.addLabelFrame("", col=0, row=0, rowspan=3)
         self.label_denoms = denom_frame.Label(self.dict_to_text(self.denom_dict)[0], int(self.screen_pad*0.45),
                                               "bold", col=0, widgetkwargs={"width": 12, "justify": "right",
@@ -182,12 +186,12 @@ class App(Tkm.ThemedTKinterFrame):
         frame3.Label("Внесите банкноты.\nМаксимальное\nколичество-\n200 банкнот", int(self.screen_pad*0.6), "bold",
                      col=2, row=0, colspan=2,  widgetkwargs={"justify": "center", "foreground": self.theme_color})
 
-        self.x_button = frame3.Button("X отчет", self.day_open, style='O.TButton', col=2, row=1)
-        self.z_button = frame3.Button("Z отчет", self.day_close, style='O.TButton', col=3, row=1)
+        self.x_button = frame3.Button("X отчет", lambda: self.report("X"), style='O.TButton', col=2, row=1)
+        self.z_button = frame3.Button("Z отчет", lambda: self.report("Z"), style='O.TButton', col=3, row=1)
 
         # theme widget options
         if self.theme == "park" and self.mode == "dark":
-            self.done = frame3.AccentButton('Зачислить', self.receipt,col=2, row=2, rowspan=2, colspan=2, pady=20)
+            self.done = frame3.AccentButton('Зачислить', self.receipt, col=2, row=2, rowspan=2, colspan=2, pady=20)
             self.back_button = frame3.Button('❮', lambda: self.select_tab(3), col=4, rowspan=4, style="park.TButton")
         else:
             self.done = frame3.Button('Зачислить', self.receipt, col=2, row=2, rowspan=2, colspan=2, pady=20)
@@ -250,6 +254,18 @@ class App(Tkm.ThemedTKinterFrame):
         self.deep_label = ttk.Label(self.tab9.master, image=self.image)
         self.deep_label.grid(row=0, column=0, columnspan=2)
 
+        # Tab10 #
+        self.frame10 = self.tab10.addFrame("X/Z Отчеты")
+        self.label10 = self.frame10.Label("", size=int(self.screen_pad * 0.8), col=0, row=0,
+                                          colspan=4, pady=0, widgetkwargs={"foreground": self.theme_color,
+                                          "justify": "center"})
+        self.frame10.Seperator(col=0, row=1, colspan=4)
+        self.denom_text2 = tkinter.Text(self.frame10.master, font=("Courier", int(self.screen_pad * 0.23), "bold"),
+                                        border=False)
+        self.denom_text2.tag_configure("center", justify='center')
+        self.denom_text2.grid(column=0, row=2, columnspan=4, rowspan=4, ipady=0)
+        self.frame10.Button('❮', lambda: self.select_tab(2), col=4, rowspan=6, style='x.TButton')
+
         # Turn on power-board and init validator
         self.engine = Engine()
         self.engine.power_on_0ff(TURN_ON)
@@ -297,12 +313,10 @@ class App(Tkm.ThemedTKinterFrame):
 
     def client_counter(self):
         file = f"{self.account}.json"
-        data = [{"day_counter": 0, "receipt_number": 1},
-                {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}]
+        self.client_data = self.droped_client_data
         if not os.path.exists(file):
             with open(f"{self.account}.json", "w"):
-                self.json_write(data, file)
-        return file
+                self.json_write(self.client_data, file)
 
     def change_theme(self, theme, mode):
         self.port_close()
@@ -331,21 +345,39 @@ class App(Tkm.ThemedTKinterFrame):
         self.user_field.delete(0, "end")
         self.password_field.delete(0, "end")
 
-    def state_butons_config(self, state_done, state_back):
-        self.done.configure(state=state_done)
-        self.back_button.configure(state=state_back)
+    def state_butons_config(self, button1, button2, state_done, state_back):
+        button1.configure(state=state_done)
+        button2.configure(state=state_back)
 
     # Functions of the main logic of the program (with configure widgets after events) #
 
-    def day_status_text(self, widget, denoms_dict, text):
+    def day_status_text(self, widget, denoms_dict, text, client=False):
         """Configure Close/Open bank day page Text widget"""
+        if client:
+            data = self.client_data
+        else:
+            data = self.data
         widget.configure(state="normal")
         widget.delete("0.0", "end")
         widget.insert("end", f"{self.datetime_now('%Y-%m-%d %H.%M.%S')}\n{self.adres}В сумке:\n", "center")
         for denom, quantity in denoms_dict:
             widget.insert("end", f"{denom} руб. - {quantity} шт.\n", "center")
-        widget.insert("end", f"\nИТОГО {str(self.data[0]['day_counter'])} руб.\n{text}", "center")
+        widget.insert("end", f"\nИТОГО {str(data[0]['day_counter'])} руб.\n{text}", "center")
         widget.configure(state="disabled")
+
+    def report(self, report_type: str):
+        """Tipe of report can be X or Z"""
+        self.label10.configure(text=f"{report_type} ОТЧЁТ")
+        self.day_status_text(self.denom_text2, self.client_data[1].items(), f"{report_type} ОТЧЁТ", client=True)
+        text = self.denom_text.get("0.0", "end")
+        print_receipt(text, receipt=f"{report_type} report", image=False)
+        if report_type == "Z":
+            self.drop_client_data()
+        self.select_tab(9)
+
+    def drop_client_data(self):
+        self.client_data = self.droped_client_data
+        self.json_write(self.client_data, f"{self.account}.json")
 
     def day_close(self):
         self.close_button.configure(state="disable")
@@ -378,6 +410,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.receipt_number += 1
         self.data[0]["day_counter"] += self.count
         self.data[0]["receipt_number"] = self.receipt_number
+        self.client_data[0]["day_counter"] += self.count
         for denom in self.data[1].keys():
             self.data[1][denom] += self.denom_dict[denom]
         self.json_write(self.data, "variables.json")
@@ -497,12 +530,14 @@ class App(Tkm.ThemedTKinterFrame):
 
     # Count methods #
     def deposit_start(self):
-        self.adres = self.chosen_client.to_dict()["adres"]
+        chosen_client = self.chosen_client.to_dict()
+        self.adres = chosen_client["adres"]
         self.data[0]["adres"] = self.adres
+        self.data[0]["client"] = chosen_client["client"]
         self.json_write(self.data, "variables.json")
         self.client_counter()
         self.count = 0
-        self.state_butons_config("disable", "normal")
+        self.state_butons_config(self.done, self.back_button, "disable", "normal")
         try:
             self.select_tab(2)
             self.read_data_from_port()
@@ -540,15 +575,17 @@ class App(Tkm.ThemedTKinterFrame):
                 if event == b"21":  # Reaction to Hoper on event
                     self.count_event_flag = True
                     self.start_count()
-                    self.state_butons_config("disable", "disable")
+                    self.state_butons_config(self.done, self.back_button, "disable", "disable")
+                    self.state_butons_config(self.x_button, self.z_button, "disable", "disable")
                     self.port.write(RESP_HOP_ON)
                 if event == b"22":  # Reaction to Hoper off event
                     self.port.write(RESP_HOP_OFF)
                     self.count_event_flag = False
                     if self.count != 0:
-                        self.state_butons_config("normal", "disable")
+                        self.state_butons_config(self.done, self.back_button, "normal", "disable")
                     else:
-                        self.state_butons_config("disable", "normal")
+                        self.state_butons_config(self.done, self.back_button, "disable", "normal")
+                        self.state_butons_config(self.x_button, self.z_button, "normal", "normal")
                 if event == b"28":  # Reaction to Banknotes don't Exist Reject event
                     self.port.write(RESP_REJ_OFF)
                 if event == b"27":  # Reaction to Banknotes Exist on Reject event
@@ -633,7 +670,7 @@ class App(Tkm.ThemedTKinterFrame):
 
     # Auxiliary methods #
     def json_read(self, file):
-        with open(file , "r", encoding="utf-8") as f:
+        with open(file, "r", encoding="utf-8") as f:
             all_variables = load(f)
             return all_variables
 
