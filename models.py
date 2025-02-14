@@ -98,9 +98,7 @@ def get_user(user_login):
 
 
 def get_client(account):
-    print(account)
     data = session.query(Clients).filter_by(account=account).first()
-    print(data)
     if data is not None:
         return data
 

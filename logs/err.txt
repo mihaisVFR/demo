@@ -617,3 +617,23 @@ ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
 2025-02-12 14:15:43.486992 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
 2025-02-12 14:15:43.489985 No available ports in system
 2025-02-12 14:15:45.610469 error open port 'Attempting to use a port that is not open'
+2025-02-14 09:23:29.488843 No available ports in system
+2025-02-14 09:23:29.488843 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-14 09:23:29.491858 No available ports in system
+2025-02-14 09:23:31.605511 error open port 'Attempting to use a port that is not open'
+2025-02-14 09:23:41.418919 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-02-14 10:45:50.074151 No available ports in system
+2025-02-14 10:45:50.074151 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-14 10:45:50.078167 No available ports in system
+2025-02-14 10:45:52.188676 error open port 'Attempting to use a port that is not open'
+2025-02-14 14:15:12.901751 No available ports in system
+2025-02-14 14:15:12.901751 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-14 14:15:12.904747 No available ports in system
+2025-02-14 14:15:15.019645 error open port 'Attempting to use a port that is not open'
+2025-02-14 14:16:14.201836 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-02-14 14:17:46.115302 No available ports in system
+2025-02-14 14:17:46.115302 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-14 14:17:46.118290 No available ports in system
+2025-02-14 14:17:48.231544 error open port 'Attempting to use a port that is not open'

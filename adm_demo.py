@@ -56,7 +56,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.timer = None  # timer of screensaver
         self.client = ""  # user data
         self.account = ""  # user account
-        self.chosen_client = {}  # chosen client in tree
+        self.chosen_client = None  # chosen client in tree
         self.img = None  # qr code image print size
         self.image_qr = None  # qr code image label size
         self.count = 0  # quantity of count notes
@@ -223,7 +223,7 @@ class App(Tkm.ThemedTKinterFrame):
                                        border=False)
         self.denom_text.tag_configure("center", justify='center')
         self.denom_text.grid(column=0, row=2, columnspan=4, rowspan=4, sticky="n", ipady=0)
-        self.frame6.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
+        self.frame6.Button('❮', lambda: self.select_tab(0), col=4, rowspan=6, style='x.TButton')
 
         # Tab7 #
         self.frame7 = self.tab7.addFrame("Операционный день открыт")
@@ -235,7 +235,7 @@ class App(Tkm.ThemedTKinterFrame):
                                         border=False)
         self.denom_text1.tag_configure("center", justify='center')
         self.denom_text1.grid(column=0, row=2, columnspan=4, rowspan=4, ipady=0)
-        self.frame7.Button('❮', lambda: self.select_tab(1), col=4, rowspan=6, style='x.TButton')
+        self.frame7.Button('❮', lambda: self.select_tab(0), col=4, rowspan=6, style='x.TButton')
 
         # Tab8 #
         frame8 = self.tab8.addFrame("Откройте смену")
@@ -249,15 +249,6 @@ class App(Tkm.ThemedTKinterFrame):
         self.image = tkinter.PhotoImage(file="deep.png")
         self.deep_label = ttk.Label(self.tab9.master, image=self.image)
         self.deep_label.grid(row=0, column=0, columnspan=2)
-
-        # Tab10 #
-        frame10 = self.tab10.addFrame("Отчеты")
-        self.open_button = frame10.AccentButton("X отчет", self.day_open, col=0, row=0, colspan=4,
-                                                padx=self.screen_pad / 2, pady=self.screen_pad / 2)
-        self.close_button = frame10.AccentButton("Z отчет", self.day_close, col=0, row=1, colspan=4,
-                                                 padx=self.screen_pad / 2, pady=self.screen_pad / 2)
-        frame10.Button('❮', lambda: self.select_tab(0), col=4, rowspan=2, style='x.TButton')
-
 
         # Turn on power-board and init validator
         self.engine = Engine()
@@ -302,14 +293,15 @@ class App(Tkm.ThemedTKinterFrame):
         item = self.tree.item(self.tree.selection())
         self.client = item["text"]
         self.account = item["values"][0]
-        chosen_client = get_client(str(self.account))
-        self.chosen_client = chosen_client.to_dict()
+        self.chosen_client = get_client(str(self.account))
 
     def client_counter(self):
         file = f"{self.account}.json"
+        data = [{"day_counter": 0, "receipt_number": 1},
+                {"5": 0, "10": 0, "50": 0, "100": 0, "200": 0, "500": 0, "1000": 0, "2000": 0, "5000": 0}]
         if not os.path.exists(file):
             with open(f"{self.account}.json", "w"):
-                self.json_write(self.data, file)
+                self.json_write(data, file)
         return file
 
     def change_theme(self, theme, mode):
@@ -505,7 +497,10 @@ class App(Tkm.ThemedTKinterFrame):
 
     # Count methods #
     def deposit_start(self):
-        self.adres = self.chosen_client["adres"]
+        self.adres = self.chosen_client.to_dict()["adres"]
+        self.data[0]["adres"] = self.adres
+        self.json_write(self.data, "variables.json")
+        self.client_counter()
         self.count = 0
         self.state_butons_config("disable", "normal")
         try:
