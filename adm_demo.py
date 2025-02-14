@@ -13,6 +13,7 @@ from struct import unpack
 from load import *
 from multiprocessing import Process, freeze_support
 from printer import *
+from caesar import caesar_cipher
 
 
 def crypt(file, password):
@@ -440,6 +441,15 @@ class App(Tkm.ThemedTKinterFrame):
         self.receipt_text.configure(text=receipt_total, font="Courier", justify="center")
         self.image_qr = tkinter.PhotoImage(file="tmpqr.png")
         self.qr_label.configure(image=self.image_qr)
+
+    def count_logs (self, mode, text):
+        encode_text = caesar_cipher(text, 8)
+        if not os.path.exists("logs/"):
+            os.makedirs("logs/")
+        now = datetime.now()
+        file = f"logs/{now.strftime('%d%m')}cnt.log"
+        with open(file, mode, encoding='utf-8') as f:
+            f.write(f"\n{now} {encode_text}")
 
     def receipt(self):
         receipt_data = self.receipt_data()
