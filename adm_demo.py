@@ -319,10 +319,9 @@ class App(Tkm.ThemedTKinterFrame):
 
     def client_counter(self):
         file = f"{self.account}.json"
-        self.client_data = self.droped_client_data
         if not os.path.exists(file):
             with open(f"{self.account}.json", "w"):
-                self.json_write(self.client_data, file)
+                self.json_write(self.droped_client_data, file)
 
     def change_theme(self, theme, mode):
         self.port_close()
@@ -432,7 +431,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.client_data = self.json_read(f"{self.account}.json")
         self.client_data[0]["day_counter"] += self.count
         self.update_denoms(self.data[1], "variables.json")
-        self.update_denoms(self.client_data[1], f"{self.account}.json")
+        #self.update_denoms(self.client_data[1], f"{self.account}.json")
         self.denom_dict = self.drop_dict(self.denom_dict)
         self.count = 0
 
