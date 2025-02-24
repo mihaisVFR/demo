@@ -33,3 +33,5 @@ ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
 2025-02-24 18:25:23.666162 cant found UPS status after 10 try's
 2025-02-24 18:27:01.855699 reject reason: IRT_Double
 2025-02-24 18:35:42.865417 cant found UPS status after 10 try's
+2025-02-24 19:31:15.484233 reject reason: Suspect_IRR
+2025-02-24 19:42:51.578549 reject reason: Suspect_IRR

@@ -265,7 +265,7 @@ class App(Tkm.ThemedTKinterFrame):
                                         border=False)
         self.denom_text2.tag_configure("center", justify='center')
         self.denom_text2.grid(column=0, row=2, columnspan=4, rowspan=4, ipady=0)
-        self.frame10.Button('❮', lambda: self.select_tab(2), col=4, rowspan=6, style='x.TButton')
+        self.frame10.Button('❮', self.select_tab2, col=4, rowspan=6, style='x.TButton')
 
         # Turn on power-board and init validator
         self.engine = Engine()
@@ -306,10 +306,15 @@ class App(Tkm.ThemedTKinterFrame):
             self.edit_field = self.user_field
             self.user_field.focus_set()
 
+    def select_tab2(self):
+        self.select_tab(2)
+        self.deposit_start()
+
     def tree_selection(self, event):
         item = self.tree.item(self.tree.selection())
         self.client = item["text"]
         self.account = item["values"][0]
+        print(self.account)
         self.chosen_client = get_client(str(self.account))
 
     def client_counter(self):
@@ -356,11 +361,18 @@ class App(Tkm.ThemedTKinterFrame):
         """Configure Close/Open bank day page Text widget"""
         if client:
             data = self.json_read(f"{self.account}.json")
+            insert_text = f"\n{self.adres}{self.client}\n{self.account}"
         else:
             data = self.data
+            if self.data[0]["day_state"]:
+                day_status = "Открытие\nОперационного дня"
+            else:
+                day_status = "Закрытие\nОперационного дня"
+            insert_text = f"\nИНКАССАЦИЯ\n{day_status}"
         widget.configure(state="normal")
         widget.delete("0.0", "end")
-        widget.insert("end", f"{self.datetime_now('%Y-%m-%d %H.%M.%S')}\n{self.adres}В сумке:\n", "center")
+        widget.insert("end", f"{self.datetime_now('%Y-%m-%d %H.%M.%S')}"
+                             f"{insert_text}\nВ сумке:\n", "center")
         for denom, quantity in denoms_dict:
             widget.insert("end", f"{denom} руб. - {quantity} шт.\n", "center")
         widget.insert("end", f"\nИТОГО {str(data[0]['day_counter'])} руб.\n{text}", "center")
@@ -375,11 +387,11 @@ class App(Tkm.ThemedTKinterFrame):
         print_receipt(text, receipt=f"{report_type} report", image=False)
         if report_type == "Z":
             self.drop_client_data()
+            print(self.client_data)
         self.select_tab(9)
 
     def drop_client_data(self):
-        self.client_data = self.droped_client_data
-        self.json_write(self.client_data, f"{self.account}.json")
+        self.json_write(self.droped_client_data, f"{self.account}.json")
 
     def day_close(self):
         self.close_button.configure(state="disable")
@@ -421,6 +433,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.update_denoms(self.data[1], "variables.json")
         self.update_denoms(self.client_data[1], f"{self.account}.json")
         self.denom_dict = self.drop_dict(self.denom_dict)
+        self.client_data = self.droped_client_data
         self.count = 0
 
     def receipt_data(self):
