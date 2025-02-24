@@ -355,7 +355,7 @@ class App(Tkm.ThemedTKinterFrame):
     def day_status_text(self, widget, denoms_dict, text, client=False):
         """Configure Close/Open bank day page Text widget"""
         if client:
-            data = self.client_data
+            data = self.json_read(f"{self.account}.json")
         else:
             data = self.data
         widget.configure(state="normal")
@@ -368,8 +368,9 @@ class App(Tkm.ThemedTKinterFrame):
 
     def report(self, report_type: str):
         """Tipe of report can be X or Z"""
+        data = self.json_read(f"{self.account}.json")
         self.label10.configure(text=f"{report_type} ОТЧЁТ")
-        self.day_status_text(self.denom_text2, self.client_data[1].items(), f"{report_type} ОТЧЁТ", client=True)
+        self.day_status_text(self.denom_text2, data[1].items(), f"*** {report_type} ОТЧЁТ ***", client=True)
         text = self.denom_text.get("0.0", "end")
         print_receipt(text, receipt=f"{report_type} report", image=False)
         if report_type == "Z":
@@ -408,8 +409,8 @@ class App(Tkm.ThemedTKinterFrame):
         self.select_tab(6)
 
     def update_denoms(self, client_or_variables, file):
-        for denom in client_or_variables[1].keys():
-            client_or_variables[1][denom] += self.denom_dict[denom]
+        for denom in client_or_variables.keys():
+            client_or_variables[denom] += self.denom_dict[denom]
         self.json_write(self.data, file)
 
     def update_counters(self):
@@ -552,6 +553,7 @@ class App(Tkm.ThemedTKinterFrame):
         self.client_counter()
         self.count = 0
         self.state_butons_config(self.done, self.back_button, "disable", "normal")
+        self.state_butons_config(self.x_button, self.z_button, "normal", "normal")
         try:
             self.select_tab(2)
             self.read_data_from_port()
@@ -599,7 +601,7 @@ class App(Tkm.ThemedTKinterFrame):
                         self.state_butons_config(self.done, self.back_button, "normal", "disable")
                     else:
                         self.state_butons_config(self.done, self.back_button, "disable", "normal")
-                        self.state_butons_config(self.x_button, self.z_button, "normal", "normal")
+                        # self.state_butons_config(self.x_button, self.z_button, "normal", "normal")
                 if event == b"28":  # Reaction to Banknotes don't Exist Reject event
                     self.port.write(RESP_REJ_OFF)
                 if event == b"27":  # Reaction to Banknotes Exist on Reject event
