@@ -429,11 +429,11 @@ class App(Tkm.ThemedTKinterFrame):
         self.receipt_number += 1
         self.data[0]["day_counter"] += self.count
         self.data[0]["receipt_number"] = self.receipt_number
+        self.client_data = self.json_read(f"{self.account}.json")
         self.client_data[0]["day_counter"] += self.count
         self.update_denoms(self.data[1], "variables.json")
         self.update_denoms(self.client_data[1], f"{self.account}.json")
         self.denom_dict = self.drop_dict(self.denom_dict)
-        self.client_data = self.droped_client_data
         self.count = 0
 
     def receipt_data(self):
