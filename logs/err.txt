@@ -38,3 +38,15 @@ ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
 2025-02-24 20:59:08.035638 reject reason: Suspect_MG
 2025-02-24 20:59:19.213127 reject reason: Suspect_IRR
 2025-02-24 20:59:21.804689 reject reason: Suspect_IRR
+2025-02-24 21:05:39.426931 cant found UPS status after 10 try's
+2025-02-24 21:07:32.218776 cant found UPS status after 10 try's
+2025-02-25 09:29:31.606903 cant found UPS status after 10 try's
+2025-02-25 09:29:36.861547 error open port 'Attempting to use a port that is not open'
+2025-02-25 09:29:43.947262 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-02-25 09:29:49.572841 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-02-25 09:29:52.633320 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-02-25 09:29:55.758976 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
