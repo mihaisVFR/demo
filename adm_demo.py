@@ -314,7 +314,6 @@ class App(Tkm.ThemedTKinterFrame):
         item = self.tree.item(self.tree.selection())
         self.client = item["text"]
         self.account = item["values"][0]
-        print(self.account)
         self.chosen_client = get_client(str(self.account))
 
     def client_counter(self):
@@ -386,7 +385,6 @@ class App(Tkm.ThemedTKinterFrame):
         print_receipt(text, receipt=f"{report_type} report", image=False)
         if report_type == "Z":
             self.drop_client_data()
-            print(self.client_data)
         self.select_tab(9)
 
     def drop_client_data(self):
@@ -429,14 +427,11 @@ class App(Tkm.ThemedTKinterFrame):
         self.data[0]["day_counter"] += self.count
         self.data[0]["receipt_number"] = self.receipt_number
         self.client_data = self.droped_client_data
-        print(self.count, self.client_data)
         self.client_data = self.json_read(f"{self.account}.json")
         self.client_data[0]["day_counter"] += self.count
-        print(self.json_read(f"{self.account}.json"), self.client_data[0]["day_counter"])
         self.update_denoms(self.data, "variables.json")
         self.update_denoms(self.client_data, f"{self.account}.json")
         self.denom_dict = self.drop_dict(self.denom_dict)
-        print(self.json_read(f"{self.account}.json"))
         self.count = 0
 
     def receipt_data(self):
@@ -470,6 +465,7 @@ class App(Tkm.ThemedTKinterFrame):
 
     def receipt(self):
         receipt_data = self.receipt_data()
+        self.count_logs("a+", receipt_data)
         self.update_counters()
         self.receipt_display(receipt_data)
         self.select_tab(4)

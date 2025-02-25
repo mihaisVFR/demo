@@ -1,12 +1,12 @@
 def caesar_cipher(text: str, shift):  # encode shift/ decode -shift
     alphabet = 'абвгдежзийклмнопрстуфхцчшщъыьэюяё'
     result = []
-    lower_text = text.lower()
+    lower_text = fr'{text.lower()}'
     if shift > 0:
-        lower_text.replace("\n", "n").replace(" ", "s")
+        arj_text =lower_text.replace("\n", "n").replace(" ", "s")
     else:
-        lower_text.replace("n", "\n").replace("s", " ")
-    for char in lower_text:
+        arj_text = lower_text.replace("n", "\n").replace("s", " ")
+    for char in arj_text:
         if char in alphabet:  # Добавляем 'ё'
             shift_amount = shift % 33  # Теперь 33 символа (32 буквы + 'ё')
             new_char = alphabet[(alphabet.index(char) + shift_amount) % 33]
