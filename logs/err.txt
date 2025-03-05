@@ -51,3 +51,42 @@ ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
 2025-02-25 09:29:55.758976 
 ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
 2025-02-25 14:10:43.085689 cant found UPS status after 10 try's
+2025-02-25 16:02:52.967018 No available ports in system
+2025-02-25 16:02:52.967018 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-25 16:02:52.970018 No available ports in system
+2025-02-26 08:27:46.387655 No available ports in system
+2025-02-26 08:27:46.388622 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-02-26 08:27:46.391628 No available ports in system
+2025-02-26 08:27:48.512273 error open port 'Attempting to use a port that is not open'
+2025-02-26 08:27:57.612404 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-02-26 08:28:37.535992 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-03-04 16:40:25.898652 No available ports in system
+2025-03-04 16:40:25.898652 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-03-04 16:40:25.902669 No available ports in system
+2025-03-04 16:40:28.021548 error open port 'Attempting to use a port that is not open'
+2025-03-04 16:40:48.238918 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-03-05 08:21:14.607799 No available ports in system
+2025-03-05 08:21:14.608822 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-03-05 08:21:14.612823 No available ports in system
+2025-03-05 08:21:16.730947 error open port 'Attempting to use a port that is not open'
+2025-03-05 08:21:27.746965 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-03-05 08:21:35.340549 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-03-05 08:22:41.293559 No available ports in system
+2025-03-05 08:22:41.293559 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-03-05 08:22:41.296548 No available ports in system
+2025-03-05 08:22:43.416015 error open port 'Attempting to use a port that is not open'
+2025-03-05 08:22:59.421148 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-03-05 08:23:21.073495 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))
+2025-03-05 08:25:32.347765 No available ports in system
+2025-03-05 08:25:32.347765 Error opening port 'Attempting to use a port that is not open'.Power control port with 'USB Serial Port' was not found in the descriptor.
+2025-03-05 08:25:32.351766 No available ports in system
+2025-03-05 08:25:34.462431 error open port 'Attempting to use a port that is not open'
+2025-03-05 08:25:42.910393 
+ClearCommError failed (OSError(9, 'Неверный дескриптор.', None, 6))

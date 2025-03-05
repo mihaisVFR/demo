@@ -381,7 +381,7 @@ class App(Tkm.ThemedTKinterFrame):
         data = self.json_read(f"{self.account}.json")
         self.label10.configure(text=f"{report_type} ОТЧЁТ")
         self.day_status_text(self.denom_text2, data[1].items(), f"*** {report_type} ОТЧЁТ ***", client=True)
-        text = self.denom_text.get("0.0", "end")
+        text = self.denom_text2.get("0.0", "end")
         print_receipt(text, receipt=f"{report_type} report", image=False)
         if report_type == "Z":
             self.drop_client_data()
