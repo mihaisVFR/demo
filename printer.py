@@ -28,17 +28,15 @@ def print_qr(file_name, h_dc):
 
     printable_area = h_dc.GetDeviceCaps(HORZRES), h_dc.GetDeviceCaps(VERTRES)
     printer_size = h_dc.GetDeviceCaps(PHYSICALWIDTH), h_dc.GetDeviceCaps(PHYSICALHEIGHT)
-    # printer_margins = h_dc.GetDeviceCaps(PHYSICALOFFSETX), h_dc.GetDeviceCaps(PHYSICALOFFSETY)
 
     bmp = Pic.open(file_name)
     if bmp.size[0] > bmp.size[1]:
         bmp = bmp.rotate(90)
 
-    ratios = [1.0 * printable_area[0] / bmp.size[0], 1.0 * printable_area[1] / bmp.size[1]]
-    scale = min(ratios)
     h_dc.StartPage()
     dib = ImageWin.Dib(bmp)
-    scaled_width, scaled_height = [int(scale * i) for i in bmp.size]
+    scaled_size = printable_area[0]//100*90 # 90% of width
+    scaled_width = scaled_height = scaled_size
     x1 = int((printer_size[0] - scaled_width) / 2)
     y1 = int((printer_size[1] - scaled_height) / 2)
     x2 = x1 + scaled_width
